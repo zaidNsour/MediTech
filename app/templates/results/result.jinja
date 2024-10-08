@@ -1,0 +1,40 @@
+{% extends "layout.jinja" %}
+
+{% block title %}
+Test Result
+{% endblock %}
+
+{% set tab_number = 2 %}
+
+{% block main %}
+<link rel="stylesheet" href="/static/styles/result.css">
+<h2>Test Result</h2>
+<table>
+    {% for result_field in result_fields %}
+    <tr>
+        <td>{{ result_field.name | snake_case_to_title_case }}:</td>
+        <td>{{ result_field.value | snake_case_to_title_case | on2positive }}</td>
+    </tr>
+    {% endfor %}
+    {{ classification }}
+    {% if user.id == 1 %}
+    <td>
+        <button onclick="window.location.href='/results'" class="mid btn" style="color: black; min-width: 85px;">
+            Go Back
+        </button>
+    </td>
+    <td>
+        <button onclick="window.location.href='/invert?id={{id}}'" class="mid btn"
+            style="color: black; min-width: 85px;">
+            Invert
+        </button>
+    </td>
+    {% else %}
+    <td colspan="2">
+        <button onclick="window.location.href='/results'" class="mid btn" style="color: black; min-width: 85px;">
+            Go Back
+        </button>
+    </td>
+    {% endif %}
+</table>
+{% endblock %}

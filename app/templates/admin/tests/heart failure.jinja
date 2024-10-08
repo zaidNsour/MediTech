@@ -1,0 +1,36 @@
+{% extends "admin/fill.jinja" %}
+
+{% block fields %}
+<tr>
+    <td><label for="creatinine_phosphokinase">Creatinine Phosphokinase (mcg/L):</label></td> <!-- cpk -->
+    <td><input type="number" name="creatinine_phosphokinase" required></td>
+</tr>
+<tr>
+    <td><label for="ejection_fraction">Ejection Fraction (%):</label></td>
+    <td><input type="number" name="ejection_fraction" required></td>
+</tr>
+<tr>
+    <td><label for="platelets">Platelets (kiloplatelets/mL):</label></td>
+    <td><input type="number" name="platelets" required step="any"></td>
+</tr>
+<tr>
+    <td><label for="serum_creatinine">Serum Creatinine (mg/dL):</label></td>
+    <td><input type="number" name="serum_creatinine" required step="any"></td>
+</tr>
+<tr>
+    <td><label for="serum_sodium">Serum Sodium (mEq/L):</label></td>
+    <td><input type="number" name="serum_sodium" required></td>
+</tr>
+<tr>
+    <td colspan="2"><input type="checkbox" name="anaemia"><label for="anaemia">Anaemia</label></td>
+</tr>
+<tr>
+    <td colspan="2"><input type="checkbox" name="diabetes"><label for="diabetes">Diabetes</label></td>
+</tr>
+<tr>
+    <td colspan="2">
+        <input type="checkbox" name="high_blood_pressure">
+        <label for="high_blood_pressure">High Blood Pressure</label>
+    </td>
+</tr>
+{% endblock fields %}

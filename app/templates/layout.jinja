@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/pics/logo/logo.ico">
+    <link href="/static/styles/styles.css" rel="stylesheet">
+    <script src="/static/scripts/htmx.min.js"></script>
+    <meta name="theme-color" content="#545454" />
+    <title>Medical Lab System: {% block title %}{% endblock %}</title>
+</head>
+
+<body>
+    <div class="navbar">
+        <div class="navbar-logo"><img src="/static/pics/logo/logo.svg" style="height: 1.7rem; translate: -15% 15%;">
+           <a href="/">MedLab</a>
+            
+        </div>
+        {% if user %}
+        <ul class="navbar-tabs">
+            <a class="navbar-tab" href="/">
+                {% if user.id == 1 %}
+                <img src="/static/pics/dashboard.svg" style="height: 1rem;" class="white">&nbsp;Dashboard
+                {% else %}
+                <img src="/static/pics/information.svg" style="height: 1rem;" class="white">&nbsp;Information
+                {% endif %}
+            </a>
+            <a class="navbar-tab" href="/appointments">
+                <img src="/static/pics/appointments.svg" style="height: 1rem;" class="white">&nbsp;Appointments</a>
+            <a class="navbar-tab" href="/results">
+                <img src="/static/pics/results.svg" style="height: 1rem;" class="white">&nbsp;Results</a>
+        </ul>
+        <a class="logout" href="/logout">Log Out</a>
+        {% endif %}
+    </div>
+
+    {% if user %}
+    <div class="center">
+        <div class="tab-bar">
+            <a class="navbar-tab" href="/">
+                {% if user.id == 1 %}
+                <span>
+                    <img src="/static/pics/dashboard.svg" style="height: 1rem;" class="white">
+                </span>Dashboard
+                {% else %}
+                <span>
+                    <img src="/static/pics/information.svg" style="height: 1rem;" class="white">
+                </span>Information
+                {%endif %}
+            </a>
+            <a class="navbar-tab" href="/appointments">
+                <span>
+                    <img src="/static/pics/appointments.svg" style="height: 1rem;" class="white">
+                </span>Appointments</a>
+            <a class="navbar-tab" href="/results">
+                <span>
+                    <img src="/static/pics/results.svg" style="height: 1rem;" class="white">
+                </span>Results</a>
+        </div>
+    </div>
+    {% endif %}
+    {% if get_flashed_messages() %}
+    <header>
+        <div id="flash" class="alert" role="alert">
+            <span id="message" style=""> {{ get_flashed_messages() | join(" ") }} </span>
+            <button id="close" onclick="closeFlash();">X</button>
+        </div>
+    </header>
+    <style>
+        main {
+            margin-top: 75px;
+        }
+    </style>
+    {% endif %}
+    <main>
+        {% block main %}{% endblock %}
+    </main>
+</body>
+<script>
+    function closeFlash() {
+        document.getElementById('flash').style.display = 'none';
+        document.getElementsByTagName('main')[0].style.marginTop = '15px';
+    }
+    const childNo = {{ tab_number }};
+    const navbarTabs = document.querySelectorAll('.navbar-tab');
+    navbarTabs[childNo].classList.add('highlight');
+    navbarTabs[childNo + 3].classList.add('highlight');
+</script>
+
+</html>
