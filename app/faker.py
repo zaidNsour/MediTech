@@ -2371,14 +2371,14 @@ USERS = [
 
 
 
-LOCATIONS = ("main lab", "secondary lab")
-PRE_REQUEST = ["num_of_children", "height", "weight", "birth_year",
+LABS = ["main lab", "secondary lab"]
+PRE_REQUEST = ["num_of_pregnancies", "height", "weight", "birth_year",
               "heart_disease","is_married", "work","residence","smoke","gender", "exng"]
 
 TEST_TYPES = {
     "diabetes": {
         "duration": 10,
-        "pre_request": ("num_of_children", "height", "weight", "birth_year"),
+        "pre_request": ("num_of_children", "height", "weight", "birth_year")
     },
     "stroke": {
         "duration": 20,
@@ -2391,15 +2391,15 @@ TEST_TYPES = {
             "work",
             "residence",
             "smoke",
-        ),
+        )
     },
 
     "heart attack": {"duration": 30, "pre_request": ("birth_year", "gender", "exng")},
     
     "heart failure": {
         "duration": 30,
-        "prerequisites": ("birth_year", "gender", "smoke"),
-    },
+        "pre_request": ("birth_year", "gender", "smoke")
+    }
 }
 
 # this data should be stored into No-SQL database in production level :)

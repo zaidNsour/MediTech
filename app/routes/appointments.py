@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template,request, redirect, flash
 from app import db
-from app.models import Appointment, Location, Stats, Test
+from app.models import Appointment, Lab, Test
 from app.utils import snake_case_to_title_case
 from datetime import datetime, timedelta
 from config import OPENING_TIME, CLOSING_TIME 
 from flask_login import current_user, login_required
-from sqlalchemy import func, update
+from sqlalchemy import func
 
 bp = Blueprint("appointments", __name__)
 
@@ -18,13 +18,13 @@ def appointments():
     if current_user.is_admin:
         appointments = Appointment.query.options(
         joinedload(Appointment.user),
-        joinedload(Appointment.location),
+        joinedload(Appointment.lab),
         joinedload(Appointment.test)
         ).all()
     else:
         appointments = Appointment.query.options(
         joinedload(Appointment.user),
-        joinedload(Appointment.location),
+        joinedload(Appointment.lab),
         joinedload(Appointment.test)
         ).filter_by(user_id=current_user.id).all()
 
@@ -36,12 +36,12 @@ def appointments():
 @bp.route("/appointments", methods=["GET"])
 @login_required
 def appointments():
-    if current_user.id == 1:
+    if current_user.is_admin:
         appointments = Appointment.query.filter_by(is_done = False).all()
     else:
         appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
     # there is no need for two templates :)    
-    return render_template(('admin' if current_user.id == 1 else 'appointments') + "/appointments.jinja",
+    return render_template(('admin' if current_user.is_admin else 'appointments') + "/appointments.jinja",
                             appointments = appointments)
 
 
@@ -52,18 +52,18 @@ def schedule():
     if request.method == "GET":
         return render_template(
             "appointments/schedule.jinja",
-             current_date = str(datetime.now())[:10],
+            current_date = str(datetime.now())[:10],
             tests = Test.query.all(),
-            locations = Location.query.all(),
+            labs = Lab.query.all(),
             )
         
     # validate form inputs
     test_id = request.form.get("test")
-    location_id = request.form.get("location")
+    lab_id = request.form.get("location")
     date = request.form.get("date")
     time = request.form.get("time")
         
-    if not all([test_id, location_id, date, time]):
+    if not all([test_id, lab_id, date, time]):
         return render_template("error.jinja", message="All fields are required", code= 400)
         
     test = Test.query.get( test_id )
@@ -91,19 +91,11 @@ def schedule():
 
     appointment = Appointment(user_id = current_user.id,
                             test_id = test_id,
-                            location_id = location_id,
+                            lab_id = lab_id,
                             time = f"{request.form.get("date")} {request.form.get("time")}"
                              )    
         
     db.session.add(appointment)
-
-    stmt = (
-        update(Stats)
-        .where(Stats.name == 'current_appointments')
-        .values(value = Stats.value + 1)
-        )
-    
-    db.session.execute(stmt)
     db.session.commit()
     flash("Appointment scheduled successfully!")
     return redirect("/appointments")
@@ -118,16 +110,13 @@ def periods():
         if date == '':
             return "<option disabled>pick a day first</option>"
         
-        location_id = request.args.get("location")
+        lab_id = request.args.get("location")
         test_id = request.args.get("test")
 
-        if not all([test_id, location_id]):
+        if not all([test_id, lab_id]):
             return render_template("error.jinja", message="All fields are required", code=400)
 
         test = Test.query.get(test_id)
-
-        #test_name = test.name
-        test_duration = test.duration
 
         # Convert opening and closing times to datetime objects
         opening_time = datetime.strptime(f"{date} {OPENING_TIME}", "%Y-%m-%d %H:%M")
@@ -136,16 +125,15 @@ def periods():
         # Get existing appointments for the day
         existing_appointments = (
         db.session.query(Appointment)
-        .filter_by(test_id= test_id, location_id= location_id, is_done= 0)
+        .filter_by(test_id= test_id, lab_id= lab_id, is_done= 0)
         .filter(func.date(Appointment.time) == date)
         .all()
     )
 
-    
         booked_periods = set(appointment.time for appointment in existing_appointments)
         available_periods = []
         current_time = opening_time
-        time_slot = timedelta(minutes= test_duration)
+        time_slot = timedelta(minutes= test.duration)
 
         while current_time + time_slot <= closing_time:
             if current_time.strftime("%Y-%m-%d %H:%M") not in booked_periods:
@@ -168,12 +156,6 @@ def remove():
 
         if appointment:
             db.session.delete(appointment)
-            stmt = (
-                update(Stats)
-                .where(Stats.name == 'current_appointments')
-                .values(value = Stats.value - 1)
-                )
-            db.session.execute(stmt)
             db.session.commit()
             flash("Appointment removed successfully!")
             return redirect("/appointments")

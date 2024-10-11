@@ -70,9 +70,9 @@ Information
                 <option value="3" {% if current_user.smoke==3 %} selected {% endif %}>Current</option>
             </select>
             <br><br>
-            <label for="pregnancies">Number of Children:</label><br>
-            <input {% if current_user. num_of_children !=None %} value="{{ current_user. num_of_children }}" {% endif %}
-                type="number" id="num_of_children" name="num_of_children" min="0">
+            <label for="pregnancies">Number of pregnancies:</label><br>
+            <input {% if current_user. num_of_children !=None %} value="{{ current_user.num_of_pregnancies }}" {% endif %}
+                type="number" id="num_of_pregnancies" name="num_of_pregnancies" min="0">
             <br><br>
             <input type="checkbox" id="exng" name="exng" value="1" {% if current_user.exng %} checked {% endif %}>
             <label for="exng">Exercise Induced Angina</label>

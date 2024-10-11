@@ -56,8 +56,8 @@ def dashboard():
 @login_required
 def index():
     try:
-        if  request.method == "GET":
-            if current_user.id == 1:
+        if request.method == "GET":
+            if current_user.is_admin:
                 return dashboard()
             
             return render_template(
@@ -65,7 +65,7 @@ def index():
             )
         
 
-        for field in ("birth_year", "height", "weight","num_of_children","work", "smoke"):
+        for field in ("birth_year", "height", "weight","num_of_pregnancies","work", "smoke"):
             value = request.form.get(field)
             if value != None and value != "":
                 try:

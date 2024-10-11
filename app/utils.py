@@ -1,7 +1,6 @@
 from functools import wraps
-from flask import redirect, render_template, request, session
+from flask import redirect, render_template, request
 import datetime
-
 from flask_login import current_user
 current_year = datetime.datetime.now().year
 from app.AI  import diabetes_p, heart_attack, heart_failure, stroke
@@ -9,25 +8,10 @@ from app.models import Appointment, ResultField, Test, User
 from app import db
 
 
-#remove this
-def login_required(f):
-    """
-    Decorate routes to require login.
-    """
-
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if current_user is None:
-            return redirect("/login")
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-# modify this to check if user.is_admin == True
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if current_user.id != 1:
+        if not current_user.is_admin:
             return redirect("/")
         return f(*args, **kwargs)
     
@@ -116,7 +100,7 @@ def classify(appointment_id):
             return render_template("error.jinja", message="All fields are required", code=400)
 
         data = [
-            user.num_of_children,  # Assuming this field represents pregnancies
+            user.num_of_pregnancies, 
             glucose,
             blood_pressure,
             skin_thickness,
@@ -161,9 +145,9 @@ def classify(appointment_id):
 
     # Insert the prediction result into the ResultField table
     result = ResultField(
-        appointment_id=appointment_id,
-        name="classification",
-        value=str(prediction)
+        appointment_id= appointment_id,
+        name= "classification",
+        value= prediction
     )
    
     db.session.add(result)

@@ -35,14 +35,6 @@ def fill():
   appointment = Appointment.query.get(appointment_id)
   appointment.is_done = True
 
-  """
-    # Update statistics
-    stats_total_results = Stats.query.filter_by(name="total_results").first()
-    stats_total_results.value += 1
-    stats_current_appointments = Stats.query.filter_by(name="current_appointments").first()
-    stats_current_appointments.value -= 1
-  """
-
   classify(appointment_id)
   db.session.commit()
   flash("Results recorded successfully!")
@@ -69,7 +61,7 @@ def users():
 def invert():
     appointment_id = request.args.get("id")
     result_field = ResultField.query.filter_by(
-        name="classification", appointment_id=appointment_id
+        name= "classification", appointment_id= appointment_id
     ).first()
     result_field.value = 1 - int(result_field.value)  # toggle between 0 and 1
     db.session.commit()

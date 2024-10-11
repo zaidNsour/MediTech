@@ -13,7 +13,7 @@ class User(db.Model,UserMixin):
   id = db.Column(db.Integer, primary_key=True)
   fullname = db.Column(db.String(120), nullable=False)
   email = db.Column(db.String(120), unique=True, nullable=False) 
-  password = db.Column(db.String(30), nullable=False)
+  password = db.Column(db.String(120), nullable=False)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
   is_admin = db.Column(db.Boolean, nullable=False, default=False)
   is_doctor = db.Column(db.Boolean, nullable=False, default=False)
@@ -50,7 +50,7 @@ class Lab(db.Model):
   name = db.Column(db.String(120), nullable= False)
   location = db.Column(db.Text, nullable= True)
 
-  appointements = db.relationship('Appointment', backref ='location', lazy=True)
+  appointments = db.relationship('Appointment', backref ='lab', lazy=True)
 
   def __repr__(self):
      return f'Location({self.id}, {self.name})'
@@ -62,7 +62,7 @@ class Test(db.Model):
   duration = db.Column(db.Integer, nullable=False) #in minutes
   name = db.Column(db.String(120), nullable=False)
 
-  appointements = db.relationship('Appointment', backref ='test', lazy = True)
+  appointments = db.relationship('Appointment', backref ='test', lazy = True)
   preparation_steps = db.relationship('PreparationStep', backref ='test', lazy = True)
    # Many to Many rel with PreRequest through the TestPreRequest association table
   pre_requests = db.relationship('PreRequest', secondary='test_pre_request', backref='tests', lazy=True)
@@ -113,10 +113,10 @@ class TestPreRequest(db.Model):
 class Appointment(db.Model):
   id = db.Column(db.Integer, primary_key=True)   
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
-  location_id = db.Column(db.Integer, db.ForeignKey('location.id'), nullable= False)
+  lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable= False)
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
   is_done = db.Column(db.Boolean, nullable= False, default= False)
-  state = db.Column(db.String(60), nullable = True) 
+  state = db.Column(db.String(60), nullable= True) 
  # if server clock different than local clock correct this by add or substract  
  # timedelta(hours = x)
   time = db.Column(db.String, nullable = True)                 
@@ -134,11 +134,11 @@ class ResultField(db.Model):
 
 
 
-class notification(db.Model):
+class Notification(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
   title = db.Column(db.String(100), nullable=False)  
-  message = db.Column(db.Text, nullable=False, default= 0)  
+  message = db.Column(db.Text, nullable= False, default= '')  
 
 
 

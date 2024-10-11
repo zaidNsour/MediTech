@@ -26,7 +26,7 @@ Results
             {% for appointment in appointments%}
             <tr>
                 <td>{{ appointment.time }}</td>
-                <td>{{ appointment.location.name }}</td>
+                <td>{{ appointment.lab.name }}</td>
                 <td>{{ appointment.test.type }}</td>
                 <td><a href="/result?id={{appointment.id}}">
                         <img src="/static/pics/open.svg" style="height: 1rem;">

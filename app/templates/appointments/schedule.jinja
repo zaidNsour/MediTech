@@ -20,8 +20,8 @@ Appointments
         </select><br>
         <label for="location">Location:</label><br>
         <select id="location" name="location" required>
-            {% for location in locations %}
-            <option value="{{ location.id }}">{{ location.name }}</option>
+            {% for lab in labs %}
+            <option value="{{ lab.id }}">{{ lab.name }}</option>
             {% endfor %}
         </select><br>
         <label for="date">Day:</label>
