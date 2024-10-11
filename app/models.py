@@ -1,8 +1,5 @@
-from flask import current_app
 from app import db, login_manager
 from datetime import datetime
-from datetime import timedelta
-from sqlalchemy.sql import func
 from flask_login import UserMixin
 
 
@@ -19,6 +16,7 @@ class User(db.Model,UserMixin):
   password = db.Column(db.String(30), nullable=False)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
   is_admin = db.Column(db.Boolean, nullable=False, default=False)
+  is_doctor = db.Column(db.Boolean, nullable=False, default=False)
 
   #additional info 
   birth_year = db.Column(db.Integer, nullable=True) 
@@ -34,29 +32,29 @@ class User(db.Model,UserMixin):
   residence = db.Column(db.Boolean, nullable=True)
   # 0: unknown, 1: never, 2: former, 3: current
   smoke = db.Column(db.Integer, nullable = True)
-  num_of_children = db.Column(db.Integer, nullable = False, default= 0)
+  num_of_pregnancies = db.Column(db.Integer, nullable = False, default= 0)
   is_pregnant = db.Column(db.Boolean, nullable = False, default = False)
   exng = db.Column(db.Boolean, nullable=True)
   heart_disease = db.Column(db.Boolean, nullable=True)
+  insurance_num = db.Column(db.Integer, nullable=True) 
 
   appointments = db.relationship('Appointment', backref ='user', lazy=True)
-
 
   def __repr__(self):
      return f'User({self.id}, {self.fullname})'
   
 
 
-class Location(db.Model):
-  id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String(120), nullable=False)
+class Lab(db.Model):
+  id = db.Column(db.Integer, primary_key= True)
+  name = db.Column(db.String(120), nullable= False)
+  location = db.Column(db.Text, nullable= True)
 
   appointements = db.relationship('Appointment', backref ='location', lazy=True)
 
   def __repr__(self):
      return f'Location({self.id}, {self.name})'
-
-
+  
 
 
 class Test(db.Model):
@@ -65,11 +63,30 @@ class Test(db.Model):
   name = db.Column(db.String(120), nullable=False)
 
   appointements = db.relationship('Appointment', backref ='test', lazy = True)
+  preparation_steps = db.relationship('PreparationStep', backref ='test', lazy = True)
    # Many to Many rel with PreRequest through the TestPreRequest association table
   pre_requests = db.relationship('PreRequest', secondary='test_pre_request', backref='tests', lazy=True)
 
   def __repr__(self):
     return f'Test({self.id}, {self.name})'
+  
+
+class PreparationStep(db.Model):
+  __tablename__ = 'preparation_step'
+  id = db.Column(db.Integer, primary_key=True)
+  test_id = db.Column(db.Integer, db.ForeignKey('test.id'))
+  description = db.Column(db.Text, nullable=False)
+  number = db.Column(db.Integer, nullable=False)
+
+  @staticmethod
+  def add_step(test_id, description):    
+     last_step = PreparationStep.query.filter_by(test_id= test_id).order_by(PreparationStep.number.desc()).first()
+     next_number = 1 if last_step is None else last_step.number + 1   
+     new_step = PreparationStep(test_id= test_id, number= next_number, description= description)
+     db.session.add(new_step)
+     db.session.commit()
+     return new_step
+
 
 
 class PreRequest(db.Model):
@@ -80,6 +97,7 @@ class PreRequest(db.Model):
   def __repr__(self):
     return f'PreRequest({self.id}, {self.name})'
   
+
 
 # association table for prevent redundancy
 class TestPreRequest(db.Model):
@@ -104,9 +122,10 @@ class Appointment(db.Model):
   time = db.Column(db.String, nullable = True)                 
   creation_time= db.Column(db.DateTime, nullable= False, default= lambda: datetime.now())
 
-  reuslts = db.relationship('ResultField', backref= 'appointment', lazy= True)
+  results = db.relationship('ResultField', backref= 'appointment', lazy= True)
 
   
+
 class ResultField(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable= False)
@@ -114,21 +133,22 @@ class ResultField(db.Model):
   value = db.Column(db.String(180), nullable=False)  
 
 
-class Stats(db.Model):
+
+class notification(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String(180), nullable=False)  
-  value = db.Column(db.Integer, nullable=False, default= 0)  
+  user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
+  title = db.Column(db.String(100), nullable=False)  
+  message = db.Column(db.Text, nullable=False, default= 0)  
 
 
 
-'''
 class Support(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  user_email = db.Column(db.String(80), nullable = False )
-  issue = db.Column(db.String(80), nullable = False )
+  email = db.Column(db.String(80), nullable = False )
+  phone = db.Column(db.String(20), nullable=True)
   title = db.Column( db.String(80), nullable = False )
   description = db.Column(db.Text, nullable = True)
 
-'''
+
 
 
