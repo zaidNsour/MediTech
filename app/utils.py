@@ -41,7 +41,7 @@ def classify(appointment_id):
     if test_type == "stroke":
 
         glucose = request.form.get("glucose")
-        hypertension = request.form.get("hypertension")
+        hypertension = request.form.get("hypertension", "off")
 
         if not all([glucose, hypertension]):
             return render_template("error.jinja", message="All fields are required", code=400)
@@ -114,11 +114,11 @@ def classify(appointment_id):
 
     elif test_type == "heart failure":
 
-        anaemia = request.form.get("anaemia")
+        anaemia = request.form.get("anaemia", "0")
         creatinine_phosphokinase = request.form.get("creatinine_phosphokinase")
-        diabetes = request.form.get("diabetes")
+        diabetes = request.form.get("diabetes", "0")
         ejection_fraction = request.form.get("ejection_fraction")
-        high_blood_pressure = request.form.get("high_blood_pressure")
+        high_blood_pressure = request.form.get("high_blood_pressure", "0")
         platelets = request.form.get("platelets")
         serum_creatinine = request.form.get("serum_creatinine")
         serum_sodium = request.form.get("serum_sodium")
@@ -129,11 +129,11 @@ def classify(appointment_id):
 
         data = [
             current_year - user.birth_year,
-            1 if anaemia == "on" else 0,
+            1 if anaemia == "1" else 0,
             creatinine_phosphokinase,
-            1 if diabetes == "on" else 0,
+            1 if diabetes == "1" else 0,
             ejection_fraction,
-            1 if high_blood_pressure  == "on" else 0,
+            1 if high_blood_pressure  == "1" else 0,
             platelets,
             serum_creatinine,
             serum_sodium,
@@ -147,7 +147,7 @@ def classify(appointment_id):
     result = ResultField(
         appointment_id= appointment_id,
         name= "classification",
-        value= prediction
+        value= str(prediction)
     )
    
     db.session.add(result)

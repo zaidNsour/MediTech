@@ -21,16 +21,29 @@
     <td><label for="serum_sodium">Serum Sodium (mEq/L):</label></td>
     <td><input type="number" name="serum_sodium" required></td>
 </tr>
+
+
 <tr>
-    <td colspan="2"><input type="checkbox" name="anaemia"><label for="anaemia">Anaemia</label></td>
-</tr>
-<tr>
-    <td colspan="2"><input type="checkbox" name="diabetes"><label for="diabetes">Diabetes</label></td>
+    <td colspan="2">
+        <input type="hidden" name="anaemia" value="0">  <!-- Default unchecked value -->
+        <input type="checkbox" name="anaemia" value="1" {% if anaemia == "1" %} checked {% endif %}>
+        <label for="anaemia">Anaemia</label>
+    </td>
 </tr>
 <tr>
     <td colspan="2">
-        <input type="checkbox" name="high_blood_pressure">
+        <input type="hidden" name="diabetes" value="0">  <!-- Default unchecked value -->
+        <input type="checkbox" name="diabetes" value="1" {% if diabetes == "1" %} checked {% endif %}>
+        <label for="diabetes">Diabetes</label>
+    </td>
+</tr>
+<tr>
+    <td colspan="2">
+        <input type="hidden" name="high_blood_pressure" value="0">  <!-- Default unchecked value -->
+        <input type="checkbox" name="high_blood_pressure" value="1" {% if high_blood_pressure == "1" %} checked {% endif %}>
         <label for="high_blood_pressure">High Blood Pressure</label>
     </td>
 </tr>
+
+
 {% endblock fields %}

@@ -43,7 +43,7 @@ td {
     text-align: initial;
 }
 
-input[type=number] {
+input[type="text"],input[type=number] {
     width: 68px;
 }
 
@@ -60,4 +60,20 @@ input:user-valid {
     color: black;
     border: 1px solid #ced4da;
     border-radius: 0.4rem;
+}
+
+
+.select-field {
+    width: 100%; 
+    padding: 0.5rem; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    background-color: #fff; 
+    appearance: none; 
+}
+
+.error {
+    color: red; 
+    font-size: 0.9rem; 
+    display: block; 
 }
