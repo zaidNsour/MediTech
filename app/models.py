@@ -15,7 +15,7 @@ class User(db.Model,UserMixin):
   email = db.Column(db.String(120), unique=True, nullable=False) 
   password = db.Column(db.String(120), nullable=False)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
-  is_admin = db.Column(db.Boolean, nullable=False, default=False)
+  is_admin = db.Column(db.Boolean, nullable=False, default= False)
   is_doctor = db.Column(db.Boolean, nullable=False, default=False)
 
   #additional info 
@@ -131,6 +131,10 @@ class ResultField(db.Model):
   appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable= False)
   name = db.Column(db.String(180), nullable=False)  
   value = db.Column(db.String(180), nullable=False)  
+
+  __table_args__ = (
+        db.UniqueConstraint('appointment_id', 'name', name='unique_appointment_per_name'),
+    )
 
 
 

@@ -20,7 +20,7 @@
         {% if user %}
         <ul class="navbar-tabs">
             <a class="navbar-tab" href="/">
-                {% if user.id == 1 %}
+                {% if user.is_admin %}
                 <img src="/static/pics/dashboard.svg" style="height: 1rem;" class="white">&nbsp;Dashboard
                 {% else %}
                 <img src="/static/pics/information.svg" style="height: 1rem;" class="white">&nbsp;Information
@@ -39,7 +39,7 @@
     <div class="center">
         <div class="tab-bar">
             <a class="navbar-tab" href="/">
-                {% if user.id == 1 %}
+                {% if user.is_admin %}
                 <span>
                     <img src="/static/pics/dashboard.svg" style="height: 1rem;" class="white">
                 </span>Dashboard
@@ -60,6 +60,8 @@
         </div>
     </div>
     {% endif %}
+
+    
     {% if get_flashed_messages() %}
     <header>
         <div id="flash" class="alert" role="alert">

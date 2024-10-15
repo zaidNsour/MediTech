@@ -6,13 +6,13 @@ from sklearn.pipeline import Pipeline
 from imblearn.over_sampling import SMOTE
 
 warnings.filterwarnings("ignore")
-model_path = os.path.join(os.path.dirname(__file__), "models", "diabetes_model.pkl")
+model_path = os.path.join(os.path.dirname(__file__), "../models", "diabetes_model.pkl")
 
 
 def init():
     print("Initializing diabetes model")
     try:
-        file_path = os.path.join(os.path.dirname(__file__), "data", "diabetes.csv")
+        file_path = os.path.join(os.path.dirname(__file__), "../data", "diabetes.csv")
         df = pd.read_csv(file_path)
 
         def remove_outliers(df, col):

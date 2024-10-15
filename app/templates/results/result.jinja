@@ -17,7 +17,7 @@ Test Result
     </tr>
     {% endfor %}
     {{ classification }}
-    {% if user.id == 1 %}
+    {% if user.is_admin %}
     <td>
         <button onclick="window.location.href='/results'" class="mid btn" style="color: black; min-width: 85px;">
             Go Back

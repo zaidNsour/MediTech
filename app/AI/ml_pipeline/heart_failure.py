@@ -3,12 +3,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import accuracy_score
 
-model_path = os.path.join(os.path.dirname(__file__), "models", "heart_failure.pkl")
+model_path = os.path.join(os.path.dirname(__file__), "../models", "heart_failure.pkl")
 
 
 def init():
     print("Initializing heart failure model")
-    file_path = os.path.join(os.path.dirname(__file__), "data", "heart_failure.csv")
+    file_path = os.path.join(os.path.dirname(__file__), "../models", "heart_failure.csv")
     heart_data = pd.read_csv(file_path)
 
     Features = [

@@ -7,12 +7,12 @@ from sklearn.tree import DecisionTreeRegressor
 from imblearn.over_sampling import SMOTE
 
 warnings.filterwarnings("ignore")
-model_path = os.path.join(os.path.dirname(__file__), "models", "stroke_model.pkl")
+model_path = os.path.join(os.path.dirname(__file__), "../models", "stroke_model.pkl")
 
 
 def init():
     print("Initializing stroke model")
-    file_path = os.path.join(os.path.dirname(__file__), "data", "stroke.csv")
+    file_path = os.path.join(os.path.dirname(__file__), "../models", "stroke.csv")
     df = pd.read_csv(file_path)
 
     # fill missing values

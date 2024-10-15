@@ -1,4 +1,4 @@
-from AI import heart_failure
+from app.AI.ml_pipeline import heart_failure
 
 data_heart_failure= [
           0,

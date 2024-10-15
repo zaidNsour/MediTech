@@ -14,9 +14,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, LabelEncoder
 
 warnings.filterwarnings("ignore")
-model_path = os.path.join(os.path.dirname(__file__), "models", "heart_attack.pkl")
+model_path = os.path.join(os.path.dirname(__file__), "../models", "heart_attack.pkl")
 transformer_path = os.path.join(
-    os.path.dirname(__file__), "models", "ha_transformers.pkl"
+    os.path.dirname(__file__), "../models", "ha_transformers.pkl"
 )
 
 

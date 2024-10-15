@@ -53,9 +53,12 @@ def dashboard():
 
 
 @bp.route("/", methods=["GET", "POST"])
-@login_required
 def index():
     try:
+        if not current_user.is_authenticated:
+            return redirect('/login')
+
+
         if request.method == "GET":
             if current_user.is_admin:
                 return dashboard()

@@ -25,7 +25,7 @@ def results():
 def result():
     appointment_id = request.args.get("id")
 
-    # we need use join in case like that
+     # we need use join in case like that
     query = db.session.query(ResultField).join(Appointment, ResultField. appointment_id == Appointment.id)
 
     if current_user.is_admin:
@@ -34,11 +34,17 @@ def result():
         # filter used here to combine conditions from different models
         result_fields = query.filter( ResultField.appointment_id == appointment_id, 
                                Appointment.user_id == current_user.id).all()
+        
+
     
-
-    classification = render_template(f"results/{"" if result_fields[-1].value == '0' else "ab"}normal.jinja") 
-
+    for i in range(len(result_fields)):
+        if result_fields[i].name == 'classification':
+                classification = render_template(f"results/{"" if result_fields[i].value == '0' else "ab"}normal.jinja")
+                result_fields.remove(result_fields[i])
+                break     
+       
+  
     return render_template(
-        "results/result.jinja", result_fields= result_fields[:-1],
-          classification= classification, id= appointment_id, user= current_user 
+        "results/result.jinja", result_fields= result_fields,
+          classification= classification, id= appointment_id, user= current_user
     )
