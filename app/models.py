@@ -143,6 +143,7 @@ class Notification(db.Model):
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
   title = db.Column(db.String(100), nullable=False)  
   message = db.Column(db.Text, nullable= False, default= '')  
+  date = db.Column(db.DateTime, nullable= False)
 
 
 
