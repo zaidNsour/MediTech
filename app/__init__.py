@@ -58,6 +58,6 @@ def create_app():
     with app.app_context():
     # Create the database if it doesn't exist
         db.create_all()
-        init_db(db)
+        
 
     return app

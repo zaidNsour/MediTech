@@ -44,7 +44,6 @@ class User(db.Model,UserMixin):
      return f'User({self.id}, {self.fullname})'
   
 
-
 class Lab(db.Model):
   id = db.Column(db.Integer, primary_key= True)
   name = db.Column(db.String(120), nullable= False)
@@ -56,20 +55,23 @@ class Lab(db.Model):
      return f'Location({self.id}, {self.name})'
   
 
-
 class Test(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  duration = db.Column(db.Integer, nullable=False) #in minutes
-  name = db.Column(db.String(120), nullable=False)
+  name = db.Column(db.String(120), nullable= False)
+  overview = db.Column(db.Text, nullable= False)
+  preparation = db.Column(db.Text, nullable= False)
+  postparation = db.Column(db.Text, nullable= True)
+  duration = db.Column(db.Integer, nullable= True) #in minutes
 
   appointments = db.relationship('Appointment', backref ='test', lazy = True)
-  preparation_steps = db.relationship('PreparationStep', backref ='test', lazy = True)
+  measures = db.relationship('TestMeasure', backref ='test', lazy = True)
    # Many to Many rel with PreRequest through the TestPreRequest association table
   pre_requests = db.relationship('PreRequest', secondary='test_pre_request', backref='tests', lazy=True)
 
   def __repr__(self):
     return f'Test({self.id}, {self.name})'
   
+'''
 
 class PreparationStep(db.Model):
   __tablename__ = 'preparation_step'
@@ -78,7 +80,7 @@ class PreparationStep(db.Model):
   description = db.Column(db.Text, nullable=False)
   number = db.Column(db.Integer, nullable=False)
 
-  @staticmethod
+    @staticmethod
   def add_step(test_id, description):    
      last_step = PreparationStep.query.filter_by(test_id= test_id).order_by(PreparationStep.number.desc()).first()
      next_number = 1 if last_step is None else last_step.number + 1   
@@ -86,6 +88,18 @@ class PreparationStep(db.Model):
      db.session.add(new_step)
      db.session.commit()
      return new_step
+
+preparation_steps= db.relationship('PreparationStep', backref ='test', lazy = True)
+
+'''
+
+class TestMeasure(db.Model):
+  __tablename__ = 'test_measure'
+
+  id = db.Column(db.Integer, primary_key=True)
+  test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
+  name = db.Column(db.Text, nullable=False)  
+
 
 
 
@@ -110,16 +124,18 @@ class TestPreRequest(db.Model):
   #pre_request = db.relationship('PreRequest', back_populates='tests')
 
 
+
 class Appointment(db.Model):
   id = db.Column(db.Integer, primary_key=True)   
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
   lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable= False)
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
+  doctor_notes = db.Column(db.Text, nullable=False)
   is_done = db.Column(db.Boolean, nullable= False, default= False)
   state = db.Column(db.String(60), nullable= True) 
  # if server clock different than local clock correct this by add or substract  
  # timedelta(hours = x)
-  time = db.Column(db.String, nullable = True)                 
+  time = db.Column(db.DateTime, nullable= False)               
   creation_time= db.Column(db.DateTime, nullable= False, default= lambda: datetime.now())
 
   results = db.relationship('ResultField', backref= 'appointment', lazy= True)
@@ -129,11 +145,11 @@ class Appointment(db.Model):
 class ResultField(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable= False)
-  name = db.Column(db.String(180), nullable=False)  
+  test_measure_id = db.Column(db.Integer, db.ForeignKey('test_measure.id'), nullable= False)
   value = db.Column(db.String(180), nullable=False)  
 
   __table_args__ = (
-        db.UniqueConstraint('appointment_id', 'name', name='unique_appointment_per_name'),
+        db.UniqueConstraint('appointment_id', 'test_measure_id', name='unique_appointment_per_measure'),
     )
 
 
@@ -156,4 +172,10 @@ class Support(db.Model):
 
 
 
+class QA(db.Model):
+   id = db.Column(db.Integer, primary_key=True)
+   question = db.Column(db.String(120), nullable=False)
+   answer = db.Column(db.String(120), nullable=False)
 
+   def to_dict(self):
+    return {"question": self.question,"answer": self.answer}
