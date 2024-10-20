@@ -1,117 +1,101 @@
-from flask import Blueprint, render_template,request, redirect, flash
+from flask import Blueprint, jsonify, render_template,request, redirect, flash
 from app import db
-from app.models import Appointment, Lab, Test
-from app.utils import snake_case_to_title_case
-from datetime import datetime, timedelta
+from app.models import Appointment, Lab, Test, User
+from app.utils import doctor_required
+from app.validators import validate_date
 from config import OPENING_TIME, CLOSING_TIME 
 from flask_login import current_user, login_required
-from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 
-bp = Blueprint("appointments", __name__)
+bp = Blueprint('appointments', __name__, url_prefix='/appointments')
 
 
-# Eager load :load everything in one query if we need optimize the performance
-'''
-@bp.route("/appointments")
-@login_required
-def appointments():
-    if current_user.is_admin:
-        appointments = Appointment.query.options(
-        joinedload(Appointment.user),
-        joinedload(Appointment.lab),
-        joinedload(Appointment.test)
-        ).all()
-    else:
-        appointments = Appointment.query.options(
-        joinedload(Appointment.user),
-        joinedload(Appointment.lab),
-        joinedload(Appointment.test)
-        ).filter_by(user_id=current_user.id).all()
-
-    return render_template(('admin' if current_user.is_admin else 'appointments') + "/appointments.jinja", appointments = appointments)
-
-'''
-
-# Lazy load :when you access for ex appointment.user additional query is made to fetch the user
 @bp.route("/appointments", methods=["GET"])
 @login_required
 def appointments():
-    if current_user.is_admin:
-        appointments = Appointment.query.filter_by(is_done = False).all()
-    else:
-        appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
-    # there is no need for two templates :)    
-    return render_template(('admin' if current_user.is_admin else 'appointments') + "/appointments.jinja",
-                            appointments = appointments)
+  if current_user.is_admin:
+    appointments = Appointment.query.filter_by(is_done = False).all()
+  else:
+    appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
+   
+    appointments_list = [appointment.to_dict() for appointment in appointments]
+    return jsonify({"appointments": appointments_list}), 200
+  
+'''
+{
+  "user": 1
+  "test": 1,
+  "location": 2,
+  "date": "2024-10-18T15:30:00"
+}
 
+'''
 
-
-@bp.route("/schedule", methods=["GET", "POST"])
-@login_required
+@bp.route("/schedule", methods=[ "POST"])
+@doctor_required
 def schedule():
-    if request.method == "GET":
-        return render_template(
-            "appointments/schedule.jinja",
-            current_date = str(datetime.now())[:10],
-            tests = Test.query.all(),
-            labs = Lab.query.all(),
-            )
-        
-    # validate form inputs
-    test_id = request.form.get("test")
-    lab_id = request.form.get("location")
-    date = request.form.get("date")
-    time = request.form.get("time")
-        
-    if not all([test_id, lab_id, date, time]):
-        return render_template("error.jinja", message="All fields are required", code= 400)
-        
-    test = Test.query.get( test_id )
+  try:
+
+    data = request.get_json()
+    user_id = data.get("user")   
+    test_id = data.get("test")      
+    lab_id = data.get("location")
+    date = data.get("date")  
+      
+    if not all([user_id, test_id, lab_id, date]):
+      return render_template("error.jinja", message="All fields are required", code= 400)  
+    
+    user = User.query.get(user_id)
+    test = Test.query.get( test_id )   
+    lab = Lab.query.get( lab_id )
+
+    if not user:
+      return jsonify({'message': 'User not found.'}), 400     
+    
     if not test:
-        return render_template("error.jinja", message="Test not found.", code= 404)
-        
-    pre_requests = test.pre_requests
-    missing = []
-
-    for pre_request in pre_requests:
-        # current_user.pre_request.name is None
-        if getattr(current_user, pre_request.name) is None:
-            missing.append(pre_request.name)
-
-    if missing:
-        return render_template("error.jinja",
-                message=f"Missing prerequisites: {', '.join(map(snake_case_to_title_case,
-                missing) )}", code=400)
+      return jsonify({'message': 'Test not found.'}), 400
     
-    ex_appointment = Appointment.query.filter_by(time = 
-                                                 f"{request.form.get('date')} {request.form.get('time')}").first()
+    if not lab:
+      return jsonify({'message': 'Lab not found.'}), 400
     
-    if ex_appointment:
-        return render_template("error.jinja", message="Appointments already exist in this time", code= 400)
+    if not validate_date(date):
+      return jsonify({'message': 'Invalid date.'}), 400
+            
+      
+    ex_appointment = Appointment.query.filter_by(date= date).first()
+      
+    if ex_appointment: 
+      return jsonify({'message': 'Appointments already exist in this time.'}), 400
 
-    appointment = Appointment(user_id = current_user.id,
-                            test_id = test_id,
-                            lab_id = lab_id,
-                            time = f"{request.form.get("date")} {request.form.get("time")}"
-                             )    
-        
+    appointment = Appointment(user_id= user_id, test_id= test_id, lab_id= lab_id, date= date)    
+          
     db.session.add(appointment)
     db.session.commit()
-    flash("Appointment scheduled successfully!")
-    return redirect("/appointments")
+    return jsonify({'message': 'Appointment scheduled successfully!'}), 200
+  
+  except SQLAlchemyError as e:
+    db.session.rollback()
+    return jsonify({'message': 'Database error occurred while schedule Appointment.'}), 500
+    
+  except Exception as e:
+    return jsonify({'message': 'An unexpected error occurred while schedule Appointment.'}), 500
 
+   
 
-
-@bp.route("/periods", methods=["GET"])
+'''
+@bp.route("/available_periods", methods=["GET"])
 @login_required
 def periods():
     try:
-        date = request.args.get("date")
-        if date == '':
-            return "<option disabled>pick a day first</option>"
-        
+        data = request.get_json()
+        day = data.get("day") 
         lab_id = request.args.get("location")
-        test_id = request.args.get("test")
+        test_id = request.args.get("test") 
+
+        if not day:
+          return jsonify({'message': 'Day not found.'}), 400
+        
+      
 
         if not all([test_id, lab_id]):
             return render_template("error.jinja", message="All fields are required", code=400)
@@ -144,29 +128,33 @@ def periods():
     
     except Exception as e:
         return render_template("error.jinja",message=f"An unexpected error occurred.", code=500), 500
+'''
 
 
-# remove need to be POST or DELETE not GET request
-@bp.route("/remove")
+
+@bp.route("/remove", methods=["DELETE"])
 @login_required
 def remove():
     try:
-        appointment_id = request.args.get("id")
-        appointment = Appointment.query.filter_by(id = appointment_id, user_id = current_user.id).first()
+      data = request.get_json()
+      appointment_id = data.get("id")
+      appointment = Appointment.query.filter_by(id = appointment_id, user_id = current_user.id).first()
 
-        if appointment:
-            db.session.delete(appointment)
-            db.session.commit()
-            flash("Appointment removed successfully!")
-            return redirect("/appointments")
-        else:
-            return render_template("error.jinja", message="Invalid Appointment.", code=500), 500
-        
+      if not appointment:
+        return jsonify({'message': 'Invalid Appointment.'}), 400      
 
-    except Exception as e:
-        db.session.rollback()
-        return render_template("error.jinja",message=f"An unexpected error occurred.", code=500), 500
+      db.session.delete(appointment)
+      db.session.commit()
+      return jsonify({'message': 'Appointment removed successfully!'}), 201 
     
+    except SQLAlchemyError as e:
+      db.session.rollback()
+      return jsonify({'message': 'Database error occurred while remove Appointment.'}), 500
+    
+    except Exception as e:
+      return jsonify({'message': 'An unexpected error occurred while remove Appointment.'}), 500
+
+ 
 
 
     

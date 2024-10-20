@@ -9,39 +9,54 @@ def load_user(user_id):
 
 
 class User(db.Model,UserMixin):
-  #required info
+  # profile info
   id = db.Column(db.Integer, primary_key=True)
   fullname = db.Column(db.String(120), nullable=False)
   email = db.Column(db.String(120), unique=True, nullable=False) 
   password = db.Column(db.String(120), nullable=False)
+  phone = db.Column(db.String(20), nullable=True)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
   is_admin = db.Column(db.Boolean, nullable=False, default= False)
   is_doctor = db.Column(db.Boolean, nullable=False, default=False)
+  insurance_num = db.Column(db.Integer, nullable=True) 
 
-  #additional info 
+  #medical info
+  gender = db.Column(db.String(10), nullable=True)
   birth_year = db.Column(db.Integer, nullable=True) 
-  # 1: male, 0: female
-  gender = db.Column(db.Boolean, nullable=True)
-  phone = db.Column(db.String(20), nullable=True)
   height = db.Column(db.Integer, nullable=True) 
   weight = db.Column(db.Integer, nullable=True)
-  is_married = db.Column(db.Boolean, nullable=True)
-  #(0: never worked, 1: private, 2: self-employed, 3: gov, 4: children)
-  work = db.Column(db.Integer, nullable=True)
-  # 0: rural, 1: urban
-  residence = db.Column(db.Boolean, nullable=True)
-  # 0: unknown, 1: never, 2: former, 3: current
-  smoke = db.Column(db.Integer, nullable = True)
+  # unknown,never,former,current
+  smoke = db.Column(db.String(20), nullable = True)
   num_of_pregnancies = db.Column(db.Integer, nullable = False, default= 0)
   is_pregnant = db.Column(db.Boolean, nullable = False, default = False)
   exng = db.Column(db.Boolean, nullable=True)
   heart_disease = db.Column(db.Boolean, nullable=True)
-  insurance_num = db.Column(db.Integer, nullable=True) 
-
+ 
   appointments = db.relationship('Appointment', backref ='user', lazy=True)
 
   def __repr__(self):
      return f'User({self.id}, {self.fullname})'
+  
+
+  def to_dict(self):
+    return {"id": self.id,
+            "fullname": self.fullname,
+            "email": self.email,
+            "phone": self.phone,
+            "is_verified": self.is_verified,
+            "is_doctor": self.is_doctor,
+            "is_admin": self.is_admin,
+            "birth_year": self.birth_year,
+            " gender": self. gender,
+            "phone": self.phone,
+            "height": self.height,
+            "weight": self. gender,
+            "smoke":self.smoke,
+            "num_of_pregnancies": self.num_of_pregnancies,
+            "is_pregnant": self.is_pregnant,
+            "exngt": self.exng,
+            "heart_disease": self.heart_disease,
+            }
   
 
 class Lab(db.Model):
@@ -57,72 +72,35 @@ class Lab(db.Model):
 
 class Test(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String(120), nullable= False)
+  name = db.Column(db.String(120), nullable= False, unique=True)
   overview = db.Column(db.Text, nullable= False)
   preparation = db.Column(db.Text, nullable= False)
   postparation = db.Column(db.Text, nullable= True)
-  duration = db.Column(db.Integer, nullable= True) #in minutes
+  duration = db.Column(db.Integer, nullable= False, default = 10) #in minutes
 
   appointments = db.relationship('Appointment', backref ='test', lazy = True)
-  measures = db.relationship('TestMeasure', backref ='test', lazy = True)
-   # Many to Many rel with PreRequest through the TestPreRequest association table
-  pre_requests = db.relationship('PreRequest', secondary='test_pre_request', backref='tests', lazy=True)
-
+  measures = db.relationship('Measure', backref ='test', lazy = True)
+ 
   def __repr__(self):
     return f'Test({self.id}, {self.name})'
   
-'''
-
-class PreparationStep(db.Model):
-  __tablename__ = 'preparation_step'
-  id = db.Column(db.Integer, primary_key=True)
-  test_id = db.Column(db.Integer, db.ForeignKey('test.id'))
-  description = db.Column(db.Text, nullable=False)
-  number = db.Column(db.Integer, nullable=False)
-
-    @staticmethod
-  def add_step(test_id, description):    
-     last_step = PreparationStep.query.filter_by(test_id= test_id).order_by(PreparationStep.number.desc()).first()
-     next_number = 1 if last_step is None else last_step.number + 1   
-     new_step = PreparationStep(test_id= test_id, number= next_number, description= description)
-     db.session.add(new_step)
-     db.session.commit()
-     return new_step
-
-preparation_steps= db.relationship('PreparationStep', backref ='test', lazy = True)
-
-'''
-
-class TestMeasure(db.Model):
-  __tablename__ = 'test_measure'
-
-  id = db.Column(db.Integer, primary_key=True)
-  test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
-  name = db.Column(db.Text, nullable=False)  
-
-
-
-
-class PreRequest(db.Model):
-  __tablename__ = 'pre_request'
-  id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String(120), nullable=False)  
-
-  def __repr__(self):
-    return f'PreRequest({self.id}, {self.name})'
+  def to_dict(self):
+    return {"name": self.name,
+            "overview": self.overview,
+            "preparation": self.preparation,
+            "is_postparation": self.postparation,
+            "duration": self.duration,
+            # need to test if its working correctly
+            "measures": [measure.name for measure in self.measures]
+            }  
   
 
-
-# association table for prevent redundancy
-class TestPreRequest(db.Model):
-  __tablename__ = 'test_pre_request'
-  test_id = db.Column(db.Integer, db.ForeignKey('test.id'), primary_key = True)
-  pre_request_id = db.Column(db.Integer, db.ForeignKey('pre_request.id'), primary_key = True)
-
-  # may need this references when use flask admin
-  #test = db.relationship('Test', back_populates='pre_requests')
-  #pre_request = db.relationship('PreRequest', back_populates='tests')
-
+  
+class Measure(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
+  name = db.Column(db.Text, nullable=False, unique=True)  
+  results = db.relationship('ResultField', backref= 'measure', lazy= True)
 
 
 class Appointment(db.Model):
@@ -130,29 +108,41 @@ class Appointment(db.Model):
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
   lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable= False)
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
-  doctor_notes = db.Column(db.Text, nullable=False)
+  doctor_notes = db.Column(db.Text, nullable=False, default = "None")
   is_done = db.Column(db.Boolean, nullable= False, default= False)
   state = db.Column(db.String(60), nullable= True) 
  # if server clock different than local clock correct this by add or substract  
  # timedelta(hours = x)
-  time = db.Column(db.DateTime, nullable= False)               
-  creation_time= db.Column(db.DateTime, nullable= False, default= lambda: datetime.now())
+  date = db.Column(db.DateTime, nullable= False)               
+  creation_date= db.Column(db.DateTime, nullable= False, default= lambda: datetime.now())
 
   results = db.relationship('ResultField', backref= 'appointment', lazy= True)
+
+  def to_dict(self):
+    return {"id": self.id,
+            "user_id": self.user_id,
+            "lab_id": self.lab_id,
+            "test_id": self.test_id,
+            "doctor_notes": self.doctor_notes,
+            "is_done": self.is_done,
+            "state": self.state,
+            "time": self.time ,
+            "creation_time": self.creation_time,
+            }
 
   
 
 class ResultField(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable= False)
-  test_measure_id = db.Column(db.Integer, db.ForeignKey('test_measure.id'), nullable= False)
+  measure_id = db.Column(db.Integer, db.ForeignKey('measure.id'), nullable= False)
   value = db.Column(db.String(180), nullable=False)  
 
   __table_args__ = (
-        db.UniqueConstraint('appointment_id', 'test_measure_id', name='unique_appointment_per_measure'),
+        db.UniqueConstraint('appointment_id', 'measure_id', name='unique_appointment_per_measure'),
     )
-
-
+  
+ 
 
 class Notification(db.Model):
   id = db.Column(db.Integer, primary_key=True)

@@ -1,84 +1,82 @@
-from flask import Blueprint, redirect, render_template, request, flash
+from flask import Blueprint, jsonify, redirect, render_template, request, flash
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import db
 from app.models import User
+from app.validators import validate_email, validate_fullname, validate_password
+from sqlalchemy.exc import SQLAlchemyError
 
-bp = Blueprint("auth", __name__)
+bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-@bp.route("/register", methods=["GET", "POST"])
+@bp.route("/register", methods=["POST"])
 def register():
     try:
-        if current_user.is_authenticated:
-            return redirect('/')
+        data = request.get_json()
+        fullname = data.get("fullname")
+        email = data.get("email")
+        password = data.get("password")
 
-        if request.method == "GET":
-            return render_template("auth/register.jinja")
-
-        fullname = request.form.get("fullname")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        verification = request.form.get("confirmation")
-
-        if not fullname:
-            return render_template("error.jinja", message="must provide fullrname", code=400)
+        if not all([fullname, email, password]):
+            return jsonify({'message': 'Missing fullname, email, or password'}), 400
         
-        if not email:
-            return render_template("error.jinja", message="email provide password", code=400)
+        if not validate_fullname(fullname):
+            return jsonify({'message': 'Invalid fullname'}), 400
 
-        if not password:
-            return render_template("error.jinja", message="must provide password", code=400)
-
-        if password != verification:
-            return render_template("error.jinja", message="passwords don't match", code=400)
+        if not validate_email(email):
+            return jsonify({'message': 'Invalid email format'}), 400
         
+        is_valid_password, password_message = validate_password(password)
+        if not is_valid_password:
+            return jsonify({'message': password_message}), 400
 
-        exsisting_user = User.query.filter_by(email = email).first()
-        # this msg could be changed for security concern
-        if exsisting_user:
-            return render_template(
-                "error.jinja", message="Account Already exist", code=400
-            )
+
+        if User.query.filter_by(email = email).first():
+            return jsonify({'message': 'User already exists'}), 400
         
         hashed_password = generate_password_hash(password)
 
         user = User(fullname= fullname, email= email, password= hashed_password)
         db.session.add(user)
         db.session.commit()
-        flash("Account Created Successfully!")
-        return redirect("/")
+        return jsonify({'message': 'User registered successfully. Please check your email to activate your account.'}), 201
+    
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'message': 'Database error occurred while register the account'}), 500
+     
     
     except Exception as e:
         return render_template("error.jinja", message=f"An unexpected error occurred", code=500), 500
     
 
-@bp.route("/login", methods=["GET", "POST"])
+@bp.route("/login", methods=["POST"])
 def login():
     try:
-        if current_user.is_authenticated:
-            return redirect('/')
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
 
-        if request.method == "GET":
-            return render_template("auth/login.jinja")
-        
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        if not email:
-            return render_template("error.jinja", message="must provide email", code=403)
-
-        if not password:
-            return render_template("error.jinja", message="must provide password", code=403)
+        if not all([email, password]):
+            return jsonify({'message': 'Missing email or password'}), 400
         
         user = User.query.filter_by(email = email).first()
 
+        '''
+        if user and not user.verified:
+            return jsonify({'message': 'Email not verified'}), 400
+        '''
+
         if user and check_password_hash(user.password, password):
             login_user(user) 
-            return redirect("/")
-    
-        flash("Invalid email or password")
-        return render_template("auth/login.jinja")
+            return jsonify({'message': 'User login successfully'}), 200
+            
+        else:
+            return jsonify({'message': 'Invalid email or password'}), 400
+        
+    except SQLAlchemyError as e:
+        return jsonify({'message': 'Database error occurred while login the account'}), 500
     
     except Exception as e:
         return render_template("error.jinja", message=f"An unexpected error occurred", code=500), 500
@@ -86,44 +84,21 @@ def login():
 
 @bp.route("/logout")
 def logout():
-    try:
-        logout_user()
-        return redirect("/login")
-    
-    except Exception as e:
-        return render_template("error.jinja", message="An unexpected error occurred", code=500), 500
-
+  try:
+    logout_user()
+    return jsonify({'message': 'User logout successfully'}), 200
     
 
+  except SQLAlchemyError as e:
+    return jsonify({'message': 'Database error occurred while logout the account'}), 500
+                       
+                       
+  except Exception as e:
+    return render_template("error.jinja", message="An unexpected error occurred", code=500), 500
+
+    
 
 
-
-'''
-@bp.route("/change_password", methods=["GET", "POST"])
-def change_password():
-    """Change user password"""
-    if request.method == "GET":
-        return render_template("auth/change_password.jinja")
-
-    password = request.form.get("password")
-    verification = request.form.get("confirmation")
-
-    if not password:
-        return render_template(
-            "error.jinja", message="must provide new password", code=400
-        )
-
-    if password != verification:
-        return render_template("error.jinja", message="passwords don't match", code=400)
-
-    db.execute(
-        "UPDATE users SET hash = ? WHERE id = ?;",
-        generate_password_hash(password),
-        session["user_id"],
-    )
-    flash("Password Changed Successfully!")
-    return redirect("/")
-'''
 
 
 
