@@ -8,7 +8,7 @@ current_year = datetime.datetime.now().year
 
 def admin_required(fn):
   @wraps(fn)
-  @login_required()
+  @login_required
   def wrapper(*args, **kwargs):
     user = current_user
     if not user or not user.is_admin:

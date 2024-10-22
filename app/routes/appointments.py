@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, render_template,request
 from app import db
 from app.models import Appointment, Lab, Test, User
-from app.utils import doctor_required
+from app.utils import admin_required
 from app.validators import validate_date
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
@@ -28,7 +28,7 @@ def appointments():
 '''
 
 @bp.route("/schedule", methods=[ "POST"])
-@doctor_required
+@admin_required
 def schedule():
   try:
     data = request.get_json()

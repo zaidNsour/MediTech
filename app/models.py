@@ -8,7 +8,7 @@ def load_user(user_id):
   return User.query.get( int(user_id) )
 
 
-class User(db.Model,UserMixin):
+class User(db.Model, UserMixin):
   # profile info
   id = db.Column(db.Integer, primary_key=True)
   fullname = db.Column(db.String(120), nullable=False)
@@ -32,6 +32,8 @@ class User(db.Model,UserMixin):
   heart_disease = db.Column(db.Boolean, nullable=True)
  
   appointments = db.relationship('Appointment', backref ='user', lazy=True)
+  supports = db.relationship('Support', backref ='user', lazy=True)
+  notifications = db.relationship('Notification', backref ='user', lazy=True)
 
   def __repr__(self):
      return f'User({self.id}, {self.fullname})'
@@ -43,7 +45,6 @@ class User(db.Model,UserMixin):
             "email": self.email,
             "phone": self.phone,
             "is_verified": self.is_verified,
-            "is_doctor": self.is_doctor,
             "is_admin": self.is_admin,
             "birth_year": self.birth_year,
             " gender": self. gender,
@@ -56,6 +57,7 @@ class User(db.Model,UserMixin):
             "exngt": self.exng,
             "heart_disease": self.heart_disease,
             }
+ 
   
 
 class Lab(db.Model):
@@ -73,7 +75,8 @@ class Lab(db.Model):
             "name": self.name,
             "location": self.location,
             }
-  
+
+
 
 class Test(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -104,8 +107,10 @@ class Test(db.Model):
 class Measure(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
-  name = db.Column(db.Text, nullable=False, unique=True)  
+  name = db.Column(db.Text, nullable=False)  
+
   results = db.relationship('ResultField', backref= 'measure', lazy= True)
+
 
 
 class Appointment(db.Model):
@@ -132,12 +137,12 @@ class Appointment(db.Model):
             "doctor_notes": self.doctor_notes,
             "is_done": self.is_done,
             "state": self.state,
-            "time": self.time ,
-            "creation_time": self.creation_time,
+            "time": self.date,
+            "creation_time": self.creation_date,
             }
 
-  
 
+  
 class ResultField(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable= False)
@@ -161,10 +166,9 @@ class Notification(db.Model):
 
 class Support(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  email = db.Column(db.String(80), nullable = False )
-  phone = db.Column(db.String(20), nullable=True)
+  user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
   title = db.Column( db.String(80), nullable = False )
-  description = db.Column(db.Text, nullable = True)
+  description = db.Column(db.Text, nullable = False)
 
 
 

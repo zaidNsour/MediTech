@@ -13,23 +13,23 @@ bp = Blueprint('users', __name__, url_prefix='/users')
 
 
 @bp.route('/users', methods=['GET'])
-@admin_required()
+
 def info():
   users = User.query.all
   users_list= [user.to_dict for user in users]
   return jsonify({"users": users_list}), 200
 
 
-@bp.route('/info', methods=['GET'])
-@login_required()
-def info():
+@bp.route('/all_info', methods=['GET'])
+@login_required
+def all_info():
   user = User.query.filter_by(id= current_user.id).first()
   if user:
     return jsonify(user.to_dict()), 200 
 
 
 @bp.route("/update_profile_info", methods=["PUT"])
-@login_required()
+@login_required
 def update_profile_info():
   try:
     data = request.get_json()
@@ -73,7 +73,7 @@ def update_profile_info():
 
 
 @bp.route("/update_medical_info", methods=["PUT"])
-@admin_required()
+@admin_required
 def update_medical_info():
   try:
     data = request.get_json()
@@ -150,19 +150,19 @@ def update_medical_info():
   
 
 @bp.route('/support', methods = ['POST'])
-@login_required() 
+@login_required
 def support():
   try:
+    user_id = current_user.id
+
     data = request.get_json()
-    email = data.get('email')
-    phone = data.get('phone')
     title = data.get('title')
     description = data.get('description')
 
-    if not all([email, phone, title, description]):
-        return jsonify({'message': 'Missing email, phone, title, or description'}), 400
+    if not all([ title, description]):
+        return jsonify({'message': 'Missing title or description'}), 400
     
-    support = Support(email = email, phone= phone, title= title, description= description)
+    support = Support(user_id= user_id, title= title, description= description)
     db.session.add(support)
     db.session.commit()
 
@@ -179,9 +179,12 @@ def support():
 
 
 @bp.route('/faq', methods = ['GET'])
-@login_required() 
+@login_required
 def faq():
-  qas = QA.query.all()
-  qas_list = [qa.to_dict() for qa in qas]
+  try:
+    qas = QA.query.all()
+    qas_list = [qa.to_dict() for qa in qas]
+    return jsonify({"faq": qas_list}), 200
   
-  return jsonify({"faq": qas_list}), 200
+  except Exception as e:
+    return jsonify({'message': 'An error occurred while fetching the faq'}), 500

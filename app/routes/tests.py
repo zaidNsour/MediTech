@@ -10,6 +10,50 @@ from app.validators import validate_measures_value
 
 bp = Blueprint('tests', __name__, url_prefix='/tests')
 
+
+
+@bp.route('/add_tests', methods = ['POST'])
+@admin_required 
+def add_tests():
+  try:
+    data = request.get_json()
+    tests = data.get('tests')
+    
+    for test in tests:
+      name = test.get('name')
+      overview= test.get('overview') 
+      preparation= test.get('preparation')
+      postparation= test.get('postparation')
+      measures= test.get('measures')
+      
+      if not all([name, overview, preparation, postparation, measures]):
+        return jsonify({'message': 'Missing name, overview, preparation, postparation, or measures'}), 400
+
+      test = Test(name= name,
+                  overview= overview,
+                  preparation= preparation,
+                  postparation= postparation,
+                  )
+      db.session.add(test)
+      db.session.commit()  # Commit here to get the test.id
+        
+      for measure_name in measures:
+          measure = Measure(test_id= test.id, name= measure_name)
+          db.session.add(measure)    
+
+    return jsonify({"message": "tests added successfully"}), 201
+  
+  except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'message': f'Database error occurred while adding the tests: {e}'}), 500
+  
+    
+  except Exception as e:
+        return jsonify({'message': f'An error occurred while adding the tests: {e}'}), 500
+
+
+
+
 @bp.route("/fill", methods=["POST"])
 @admin_required
 def fill():
