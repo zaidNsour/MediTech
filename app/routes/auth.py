@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, redirect, render_template, request, flash
+from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import db
@@ -48,12 +48,15 @@ def register():
      
     
     except Exception as e:
-        return render_template("error.jinja", message=f"An unexpected error occurred", code=500), 500
+        return jsonify({'message': 'An unexpected error occurred while register the account'}), 500
     
 
 @bp.route("/login", methods=["POST"])
 def login():
     try:
+        if current_user.is_authenticated:
+          return jsonify({'message': 'User already logged in'}), 400  
+
         data = request.get_json()
         email = data.get("email")
         password = data.get("password")
@@ -79,7 +82,7 @@ def login():
         return jsonify({'message': 'Database error occurred while login the account'}), 500
     
     except Exception as e:
-        return render_template("error.jinja", message=f"An unexpected error occurred", code=500), 500
+        return jsonify({'message': 'An unexpected error occurred while login the account'}), 500
         
 
 @bp.route("/logout")
@@ -94,7 +97,8 @@ def logout():
                        
                        
   except Exception as e:
-    return render_template("error.jinja", message="An unexpected error occurred", code=500), 500
+    return jsonify({'message': 'An unexpected error occurred while logout the account'}), 500
+
 
     
 

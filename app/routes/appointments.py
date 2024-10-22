@@ -1,9 +1,8 @@
-from flask import Blueprint, jsonify, render_template,request, redirect, flash
+from flask import Blueprint, jsonify, render_template,request
 from app import db
 from app.models import Appointment, Lab, Test, User
 from app.utils import doctor_required
 from app.validators import validate_date
-from config import OPENING_TIME, CLOSING_TIME 
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -13,13 +12,10 @@ bp = Blueprint('appointments', __name__, url_prefix='/appointments')
 @bp.route("/appointments", methods=["GET"])
 @login_required
 def appointments():
-  if current_user.is_admin:
-    appointments = Appointment.query.filter_by(is_done = False).all()
-  else:
-    appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
    
-    appointments_list = [appointment.to_dict() for appointment in appointments]
-    return jsonify({"appointments": appointments_list}), 200
+  appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
+  appointments_list = [appointment.to_dict() for appointment in appointments]
+  return jsonify({"appointments": appointments_list}), 200
   
 '''
 {
@@ -35,15 +31,14 @@ def appointments():
 @doctor_required
 def schedule():
   try:
-
     data = request.get_json()
     user_id = data.get("user")   
     test_id = data.get("test")      
-    lab_id = data.get("location")
+    lab_id = data.get("lab")
     date = data.get("date")  
       
     if not all([user_id, test_id, lab_id, date]):
-      return render_template("error.jinja", message="All fields are required", code= 400)  
+      return jsonify({'message': 'All fields are required'}), 400 
     
     user = User.query.get(user_id)
     test = Test.query.get( test_id )   
@@ -132,9 +127,9 @@ def periods():
 
 
 
-@bp.route("/remove", methods=["DELETE"])
+@bp.route("/cancel_request", methods=["POST"])
 @login_required
-def remove():
+def cancel_request():
     try:
       data = request.get_json()
       appointment_id = data.get("id")
@@ -143,20 +138,30 @@ def remove():
       if not appointment:
         return jsonify({'message': 'Invalid Appointment.'}), 400      
 
-      db.session.delete(appointment)
+      appointment.state = "Cancellation Requested"
       db.session.commit()
-      return jsonify({'message': 'Appointment removed successfully!'}), 201 
+      return jsonify({'message': 'Cancellation Requested successfully!'}), 201 
     
     except SQLAlchemyError as e:
       db.session.rollback()
-      return jsonify({'message': 'Database error occurred while remove Appointment.'}), 500
+      return jsonify({'message': 'Database error occurred while Cancellation Requested.'}), 500
     
     except Exception as e:
-      return jsonify({'message': 'An unexpected error occurred while remove Appointment.'}), 500
+      return jsonify({'message': 'An unexpected error occurred while Cancellation Requested.'}), 500
+    
 
  
 
-
+@bp.route("/labs")
+@login_required
+def labs():
+  try:
+    labs = Lab.query.all()   
+    labs_list = [lab.to_dict() for lab in labs] 
+    return jsonify({"labs": labs_list}), 200
+  
+  except Exception as e:
+    return jsonify({'message': 'An unexpected error occurred while fetch the labs.'}), 500
     
 
 

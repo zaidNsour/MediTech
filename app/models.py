@@ -17,7 +17,6 @@ class User(db.Model,UserMixin):
   phone = db.Column(db.String(20), nullable=True)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
   is_admin = db.Column(db.Boolean, nullable=False, default= False)
-  is_doctor = db.Column(db.Boolean, nullable=False, default=False)
   insurance_num = db.Column(db.Integer, nullable=True) 
 
   #medical info
@@ -69,6 +68,12 @@ class Lab(db.Model):
   def __repr__(self):
      return f'Location({self.id}, {self.name})'
   
+  def to_dict(self):
+    return {"id": self.id,
+            "name": self.name,
+            "location": self.location,
+            }
+  
 
 class Test(db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -110,7 +115,8 @@ class Appointment(db.Model):
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
   doctor_notes = db.Column(db.Text, nullable=False, default = "None")
   is_done = db.Column(db.Boolean, nullable= False, default= False)
-  state = db.Column(db.String(60), nullable= True) 
+  # Scheduled, Confirmed, Rescheduled, Canceled, Cancellation Requested 
+  state = db.Column(db.String(60), nullable= False, default = "Scheduled") 
  # if server clock different than local clock correct this by add or substract  
  # timedelta(hours = x)
   date = db.Column(db.DateTime, nullable= False)               

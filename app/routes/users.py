@@ -1,12 +1,13 @@
 from flask import Blueprint, jsonify, request
-from app.models import Appointment, Lab, Test, User
-from app.utils import admin_required, doctor_required
+from app.models import QA, Appointment, Lab, Support, Test, User
+from app.utils import admin_required
 from app.validators import validate_email, validate_exng, validate_fullname, validate_heart_disease
 from app.validators import validate_height, validate_insurance_num, validate_is_pregnant
-from app.validators import  validate_num_of_pregnancies, validate_smoke, validate_weight
-from config import OPENING_TIME, CLOSING_TIME 
+from app.validators import  validate_num_of_pregnancies, validate_smoke, validate_weight, validate_phone
+
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
+from app import db
 
 bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -29,11 +30,9 @@ def info():
 
 @bp.route("/update_profile_info", methods=["PUT"])
 @login_required()
-def update_info():
+def update_profile_info():
   try:
-    
     data = request.get_json()
-    
     fullname= data.get('fullname')
     email= data.get('email')
     phone = data.get('phone')
@@ -50,6 +49,11 @@ def update_info():
       if not validate_email(email):
         return jsonify({'message': 'Invalid email'}), 400
       user.email = email
+
+    if phone:
+      if not validate_phone(phone):
+        return jsonify({'message': 'Invalid phone'}), 400
+      user.phone = phone
 
     if insurance_num:
       if not validate_insurance_num(insurance_num):
@@ -69,12 +73,10 @@ def update_info():
 
 
 @bp.route("/update_medical_info", methods=["PUT"])
-@doctor_required()
-def update_info():
+@admin_required()
+def update_medical_info():
   try:
-
     data = request.get_json()
-
     user_id = data.get("id")
     height= data.get('height')
     weight= data.get('height')
@@ -136,14 +138,50 @@ def update_info():
       else:
         user.heart_disease = False
 
-
     db.session.commit()
     return jsonify({'message': 'User Profile updated successfully.'}), 200
 
-  
   except SQLAlchemyError as e:
     db.session.rollback()
     return jsonify({'message': 'Database error occurred while update the user info'}), 500
   
   except Exception as e:
     return jsonify({'message': 'An error occurred while update the user info'}), 500
+  
+
+@bp.route('/support', methods = ['POST'])
+@login_required() 
+def support():
+  try:
+    data = request.get_json()
+    email = data.get('email')
+    phone = data.get('phone')
+    title = data.get('title')
+    description = data.get('description')
+
+    if not all([email, phone, title, description]):
+        return jsonify({'message': 'Missing email, phone, title, or description'}), 400
+    
+    support = Support(email = email, phone= phone, title= title, description= description)
+    db.session.add(support)
+    db.session.commit()
+
+    return jsonify({"message": "support created successfully."}), 201
+
+  except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({'message': 'Database error occurred while adding the support'}), 500
+  
+    
+  except Exception as e:
+        return jsonify({'message': 'An error occurred while adding the support'}), 500
+  
+
+
+@bp.route('/faq', methods = ['GET'])
+@login_required() 
+def faq():
+  qas = QA.query.all()
+  qas_list = [qa.to_dict() for qa in qas]
+  
+  return jsonify({"faq": qas_list}), 200

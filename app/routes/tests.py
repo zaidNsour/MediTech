@@ -34,7 +34,7 @@ def fill():
       if not measure:
         return jsonify({"message": "Invalid measures for this test."}), 400
       if not validate_measures_value(measure.id, value):
-        return jsonify({f"message": "Invalid values for the given measure: {measure_name}"}), 400
+        return jsonify({"message": f"Invalid values for the given measure: {measure_name}"}), 400
       
       result = ResultField(appointment_id= appointment_id, measure_id= measure.id, value= value)
       db.session.add(result)
