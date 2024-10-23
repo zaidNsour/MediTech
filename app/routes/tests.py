@@ -4,8 +4,8 @@ from app.models import Appointment, Measure, ResultField, Test
 from app.utils import admin_required
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
-
 from app.validators import validate_measures_value
+from app.utils import classify_result_value
 
 
 bp = Blueprint('tests', __name__, url_prefix='/tests')
@@ -54,7 +54,6 @@ def add_tests():
 
 
 
-
 @bp.route("/fill", methods=["POST"])
 @admin_required
 def fill():
@@ -70,6 +69,8 @@ def fill():
         
     test = appointment.test
     measures = test.measures
+    user= appointment.user
+
     if len(values) < len(measures):
       return jsonify({"message": "There is missing measures value."}), 400 
 
@@ -81,7 +82,12 @@ def fill():
       if not validate_measures_value(measure.id, value):
         return jsonify({"message": f"Invalid values for the given measure: {measure_name}"}), 400
       
-      result = ResultField(appointment_id= appointment_id, measure_id= measure.id, value= value)
+      classification= classify_result_value(test.name, measure_name,user.gender, value)  
+
+      result = ResultField(appointment_id= appointment_id,
+                          measure_id= measure.id,
+                           value= value,
+                           classification = classification)
       db.session.add(result)
 
     appointment.is_done = True

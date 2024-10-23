@@ -16,7 +16,7 @@ class User(db.Model, UserMixin):
   password = db.Column(db.String(120), nullable=False)
   phone = db.Column(db.String(20), nullable=True)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
-  is_admin = db.Column(db.Boolean, nullable=False, default= False)
+  is_admin = db.Column(db.Boolean, nullable=False, default= True)
   insurance_num = db.Column(db.String(20), nullable=True) 
 
   #medical info
@@ -149,6 +149,7 @@ class ResultField(db.Model):
   appointment_id = db.Column(db.Integer, db.ForeignKey('appointment.id'), nullable= False)
   measure_id = db.Column(db.Integer, db.ForeignKey('measure.id'), nullable= False)
   value = db.Column(db.String(180), nullable=False)  
+  classification = db.Column(db.String(50), nullable= True)
 
   __table_args__ = (
         db.UniqueConstraint('appointment_id', 'measure_id', name='unique_appointment_per_measure'),
