@@ -1,10 +1,11 @@
-from flask import Blueprint, jsonify, render_template,request
+from flask import Blueprint, jsonify, request
 from app import db
 from app.models import Appointment, Lab, Test, User
 from app.utils import admin_required
 from app.validators import validate_date
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime
 
 bp = Blueprint('appointments', __name__, url_prefix='/appointments')
 
@@ -32,9 +33,9 @@ def appointments():
 def schedule():
   try:
     data = request.get_json()
-    user_id = data.get("user")   
-    test_id = data.get("test")      
-    lab_id = data.get("lab")
+    user_id = data.get("user_id")   
+    test_id = data.get("test_id")      
+    lab_id = data.get("lab_id")
     date = data.get("date")  
       
     if not all([user_id, test_id, lab_id, date]):
@@ -55,14 +56,15 @@ def schedule():
     
     if not validate_date(date):
       return jsonify({'message': 'Invalid date.'}), 400
-            
+    
+    date_object = datetime.fromisoformat(date)
       
-    ex_appointment = Appointment.query.filter_by(date= date).first()
+    ex_appointment = Appointment.query.filter_by(date= date_object, lab_id= lab_id).first()
       
     if ex_appointment: 
       return jsonify({'message': 'Appointments already exist in this time.'}), 400
 
-    appointment = Appointment(user_id= user_id, test_id= test_id, lab_id= lab_id, date= date)    
+    appointment = Appointment(user_id= user_id, test_id= test_id, lab_id= lab_id, date= date_object)    
           
     db.session.add(appointment)
     db.session.commit()
@@ -70,7 +72,7 @@ def schedule():
   
   except SQLAlchemyError as e:
     db.session.rollback()
-    return jsonify({'message': 'Database error occurred while schedule Appointment.'}), 500
+    return jsonify({'message': f'Database error occurred while schedule Appointment.{e}'}), 500
     
   except Exception as e:
     return jsonify({'message': 'An unexpected error occurred while schedule Appointment.'}), 500
@@ -126,13 +128,12 @@ def periods():
 '''
 
 
-
 @bp.route("/cancel_request", methods=["POST"])
 @login_required
 def cancel_request():
     try:
       data = request.get_json()
-      appointment_id = data.get("id")
+      appointment_id = data.get("appointment_id")
       appointment = Appointment.query.filter_by(id = appointment_id, user_id = current_user.id).first()
 
       if not appointment:

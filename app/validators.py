@@ -1,7 +1,7 @@
 import re
 
 def is_boolean(num):
-  return num in [0,1]
+  return num in [True,False]
 
 def validate_fullname(fullname):
     return len(fullname) >= 3
@@ -24,7 +24,7 @@ def validate_password(value):
     return True, ""
 
 def validate_phone(phone):
-  return len(phone) >= 10
+  return len(phone) >= 8
 
 def validate_height(height):
     return height > 0 and height < 600

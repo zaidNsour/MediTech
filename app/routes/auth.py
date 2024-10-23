@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import db
@@ -85,9 +85,12 @@ def login():
         return jsonify({'message': 'An unexpected error occurred while login the account'}), 500
         
 
-@bp.route("/logout")
+@bp.route("/logout", methods=["POST"])
 def logout():
   try:
+    if not current_user.is_authenticated:
+      return jsonify({'message': 'User already logged out'}), 400     
+
     logout_user()
     return jsonify({'message': 'User logout successfully'}), 200
     

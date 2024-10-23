@@ -39,8 +39,9 @@ def add_tests():
         
       for measure_name in measures:
           measure = Measure(test_id= test.id, name= measure_name)
-          db.session.add(measure)    
+          db.session.add(measure)   
 
+    db.session.commit() 
     return jsonify({"message": "tests added successfully"}), 201
   
   except SQLAlchemyError as e:
@@ -93,7 +94,7 @@ def fill():
     return jsonify({'message': 'Database error occurred while fill the test.'}), 500
   
   except Exception as e:
-    return jsonify({'message': 'An unexpected error occurred while fill the test.'}), 500
+    return jsonify({'message': f'An unexpected error occurred while fill the test.{e}'}), 500
  
 
 
@@ -129,9 +130,9 @@ def result():
     appointment_id = data.get("appointment_id")
       
     if current_user.is_admin:
-      appointment = Appointment.query.filter_by(id= appointment_id, is_done= True)     
+      appointment = Appointment.query.filter_by(id= appointment_id, is_done= True).first()     
     else:
-      appointment = Appointment.query.filter_by(id= appointment_id, user_id= current_user.id, is_done= True)  
+      appointment = Appointment.query.filter_by(id= appointment_id, user_id= current_user.id, is_done= True).first()    
 
     if not appointment:
       return jsonify({"message": "Invalid appointment ID."}), 400 
@@ -143,7 +144,7 @@ def result():
     return jsonify({"result_fields": result_list, "doctor_notes": appointment.doctor_notes}), 200
   
   except Exception as e:
-    return jsonify({'message': 'An unexpected error occurred while fetch the result.'}), 500
+    return jsonify({'message': f'An unexpected error occurred while fetch the result.{e}'}), 500
 
 
     

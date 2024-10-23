@@ -17,7 +17,7 @@ class User(db.Model, UserMixin):
   phone = db.Column(db.String(20), nullable=True)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
   is_admin = db.Column(db.Boolean, nullable=False, default= False)
-  insurance_num = db.Column(db.Integer, nullable=True) 
+  insurance_num = db.Column(db.String(20), nullable=True) 
 
   #medical info
   gender = db.Column(db.String(10), nullable=True)
@@ -49,12 +49,13 @@ class User(db.Model, UserMixin):
             "birth_year": self.birth_year,
             " gender": self. gender,
             "phone": self.phone,
+            "insurance_num": self.insurance_num,
             "height": self.height,
-            "weight": self. gender,
+            "weight": self. weight,
             "smoke":self.smoke,
             "num_of_pregnancies": self.num_of_pregnancies,
             "is_pregnant": self.is_pregnant,
-            "exngt": self.exng,
+            "exng": self.exng,
             "heart_disease": self.heart_disease,
             }
  
@@ -80,7 +81,7 @@ class Lab(db.Model):
 
 class Test(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  name = db.Column(db.String(120), nullable= False, unique=True)
+  name = db.Column(db.Text, nullable= False, unique=True)
   overview = db.Column(db.Text, nullable= False)
   preparation = db.Column(db.Text, nullable= False)
   postparation = db.Column(db.Text, nullable= True)

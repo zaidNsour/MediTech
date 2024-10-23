@@ -13,10 +13,10 @@ bp = Blueprint('users', __name__, url_prefix='/users')
 
 
 @bp.route('/users', methods=['GET'])
-
+@admin_required
 def info():
-  users = User.query.all
-  users_list= [user.to_dict for user in users]
+  users = User.query.all()
+  users_list= [user.to_dict() for user in users]
   return jsonify({"users": users_list}), 200
 
 
@@ -69,7 +69,7 @@ def update_profile_info():
     return jsonify({'message': 'Database error occurred while update the user info'}), 500
   
   except Exception as e:
-    return jsonify({'message': 'An error occurred while update the user info'}), 500
+    return jsonify({'message': f'An error occurred while update the user info{e}'}), 500
 
 
 @bp.route("/update_medical_info", methods=["PUT"])
@@ -77,9 +77,9 @@ def update_profile_info():
 def update_medical_info():
   try:
     data = request.get_json()
-    user_id = data.get("id")
+    user_id = data.get("user_id")
     height= data.get('height')
-    weight= data.get('height')
+    weight= data.get('weight')
     smoke = data.get('smoke')
     num_of_pregnancies = data.get('num_of_pregnancies')
     is_pregnant = data.get('is_pregnant')
@@ -102,7 +102,7 @@ def update_medical_info():
     if weight:
       if not validate_weight(weight):
         return jsonify({'message': 'Invalid weight'}), 400
-      user.weight = height
+      user.weight = weight
 
     if smoke:
       if not validate_smoke(smoke):
@@ -117,26 +117,21 @@ def update_medical_info():
     if is_pregnant:
       if not validate_is_pregnant(is_pregnant):
         return jsonify({'message': 'Invalid pregnant status'}), 400
-      if is_pregnant == 1:
-        user.is_pregnant= True
-      else:
-        user.is_pregnant= False
-
+     
+      user.is_pregnant= is_pregnant
+     
     if exng:
       if not validate_exng(exng):
         return jsonify({'message': 'Invalid exng'}), 400
-      if exng == 1:
-        user.exng = True
-      else:
-        user.exng = False
-
+     
+      user.exng = exng
+     
     if heart_disease:
       if not validate_heart_disease(heart_disease):
         return jsonify({'message': 'Invalid heart_disease'}), 400
-      if heart_disease == 1:
-        user.heart_disease = True
-      else:
-        user.heart_disease = False
+  
+      user.heart_disease = heart_disease
+     
 
     db.session.commit()
     return jsonify({'message': 'User Profile updated successfully.'}), 200
