@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify,request
 from app import db
 from app.models import Appointment, Measure, ResultField, Test
-from app.utils import admin_required
+from app.utils import admin_required, generate_prompt, get_prompt_result, parse_user_info
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
 from app.validators import validate_measures_value
@@ -144,13 +144,48 @@ def result():
       return jsonify({"message": "Invalid appointment ID."}), 400 
 
     result_fields = ResultField.query.filter_by(appointment_id= appointment_id).all()
-    result_list = [ {"name": result.measure.name, "value":result.value}
+    result_list = [ {"name": result.measure.name,
+                     "value":result.value,
+                    "classification":result.classification
+                    }
                     for result in result_fields ]
     
     return jsonify({"result_fields": result_list, "doctor_notes": appointment.doctor_notes}), 200
   
   except Exception as e:
-    return jsonify({'message': f'An unexpected error occurred while fetch the result.{e}'}), 500
+    return jsonify({'message': f'An unexpected error occurred while fetch the result.'}), 500
+  
+
+
+@bp.route("/interpret")
+@login_required
+def interpret():
+  try:
+    data = request.get_json()
+    appointment_id = data.get("appointment_id")
+      
+    if current_user.is_admin:
+      appointment = Appointment.query.filter_by(id= appointment_id, is_done= True).first()     
+    else:
+      appointment = Appointment.query.filter_by(id= appointment_id, user_id= current_user.id, is_done= True).first()    
+
+    if not appointment:
+      return jsonify({"message": "Invalid appointment ID."}), 400 
+
+    test_name = appointment.test.name
+    user_info= parse_user_info(appointment.user)
+    results = [f"name:{result.measure.name}, value:{result.value}," for result in appointment.results]
+    doctor_notes = appointment.doctor_notes
+
+    prompt = generate_prompt(test_name, user_info, results, doctor_notes)
+    interpretation = get_prompt_result(prompt)
+
+    
+    return jsonify({"result interpretation": interpretation}), 200
+  
+  except Exception as e:
+    return jsonify({'message': f'An unexpected error occurred while fetch the result. {e}'}), 500
+
 
 
     

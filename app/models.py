@@ -119,7 +119,7 @@ class Appointment(db.Model):
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
   lab_id = db.Column(db.Integer, db.ForeignKey('lab.id'), nullable= False)
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
-  doctor_notes = db.Column(db.Text, nullable=False, default = "None")
+  doctor_notes = db.Column(db.String(200), nullable=False, default = "None")
   is_done = db.Column(db.Boolean, nullable= False, default= False)
   # Scheduled, Confirmed, Rescheduled, Canceled, Cancellation Requested 
   state = db.Column(db.String(60), nullable= False, default = "Scheduled") 

@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 
 
+
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 migrate = Migrate()
@@ -30,6 +31,12 @@ def create_app():
     app.register_blueprint(tests.bp)
 
 
+    from app.models import Appointment
+    from app.utils import parse_user_info
+
+    
+
+
     from app.database import init_db
     
     with app.app_context():
@@ -37,5 +44,4 @@ def create_app():
         db.create_all()
         init_db(db)
         
-
     return app

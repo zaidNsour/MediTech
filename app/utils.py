@@ -2,8 +2,14 @@ from functools import wraps
 from flask import jsonify
 import datetime
 from flask_login import current_user, login_required
-
+import os
 current_year = datetime.datetime.now().year
+import google.generativeai as genai
+
+API_KEY = os.environ.get('SECRET_KEY')
+genai.configure(api_key= API_KEY)
+
+model = genai.GenerativeModel(model_name= "gemini-1.5-flash")
 
 
 def admin_required(fn):
@@ -74,6 +80,27 @@ def classify_result_value(test_name, measure_name, gender, value):
             return  "abnormal"
         
     return  None
+
+
+def parse_user_info(user):
+   return f"gender:{user.gender}, birth year: {user.birth_year}, height: {user.height}, height: {user.height}, weight: {user.weight},smoke: {user.smoke}, num_of_pregnancies: {user.num_of_pregnancies}, is_pregnant: {user.is_pregnant}, exng: {user.exng}, heart_disease: {user.heart_disease}"
+
+
+def generate_prompt(test_name, user_info, result, doctor_notes):
+    return f"""Please interpret the results of the {test_name},
+      test in a simplified way for a non-medical user,
+      and limit the explanation to a maximum of 50 words.
+      The user information is: {user_info}.\n     
+      The test results are: {result}.
+      Doctor’s notes: {doctor_notes}""".replace("\n      ","").replace("\n     ","")
+
+def get_prompt_result(prompt):
+  response = model.generate_content(prompt)
+  return response.text
+
+
+
+
 
 
 
