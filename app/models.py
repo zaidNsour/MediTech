@@ -160,9 +160,14 @@ class ResultField(db.Model):
 class Notification(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable= False)
-  title = db.Column(db.String(100), nullable=False)  
-  message = db.Column(db.Text, nullable= False, default= '')  
-  date = db.Column(db.DateTime, nullable= False)
+  content = db.Column(db.Text, nullable= False, default= '')  
+  is_read = db.Column(db.Boolean, nullable= False, default= False)
+  creation_date= db.Column(db.DateTime, nullable= False, default= lambda: datetime.now())
+
+
+  def to_dict(self):
+    return {"id": self.id,"content": self.content,
+            "is_read": self.is_read, "creation_date": self.creation_date}
 
 
 

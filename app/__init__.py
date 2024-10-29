@@ -22,19 +22,14 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)   
 
-    from app.routes import auth, users,appointments, tests
+    from app.routes import auth, users,appointments, tests, notifications
 
     # Register Blueprints
     app.register_blueprint(auth.bp)
     app.register_blueprint(appointments.bp)
     app.register_blueprint(users.bp)
     app.register_blueprint(tests.bp)
-
-
-    from app.models import Appointment
-    from app.utils import parse_user_info
-
-    
+    app.register_blueprint(notifications.bp)
 
 
     from app.database import init_db

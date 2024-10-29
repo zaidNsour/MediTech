@@ -56,3 +56,7 @@ def validate_insurance_num(insurance_num):
 
 def validate_measures_value(measure_id, value):
   return True    
+
+
+def validate_content(content):
+    return len(content) >= 8

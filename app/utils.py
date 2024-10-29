@@ -3,6 +3,8 @@ from flask import jsonify
 import datetime
 from flask_login import current_user, login_required
 import os
+from app import db
+from app.models import Notification
 current_year = datetime.datetime.now().year
 import google.generativeai as genai
 
@@ -26,7 +28,7 @@ def admin_required(fn):
 
 
 def classify_result_value(test_name, measure_name, gender, value):
-    # to avoid any error happened if gender doesn't exist assume its M
+    # to avoid any error happened if gender doesn't exist assume its male
     if not gender:
       gender= "male"
 
@@ -97,6 +99,18 @@ def generate_prompt(test_name, user_info, result, doctor_notes):
 def get_prompt_result(prompt):
   response = model.generate_content(prompt)
   return response.text
+
+
+
+def trigger_notification(user_id, content):
+  notification = Notification(user_id= user_id, content= content)
+  db.session.add(notification)
+  db.session.commit()
+  
+    
+ 
+        
+   
 
 
 
