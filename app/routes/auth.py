@@ -130,7 +130,7 @@ def set_password_request():
 @bp.route("/reset_password/<token>", methods=['GET','POST'])
 def reset_password(token):
   try:
-    user= User.verify_token(token)
+    user= User.verify_reset_token(token)
     if not user:
         flash('The token is invalid or expired', 'warning')
     
