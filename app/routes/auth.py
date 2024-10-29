@@ -108,35 +108,43 @@ def logout():
 
 
 @bp.route("/reset_password_request", methods=['POST'])
-def reset_request():
-  data = request.get_json()
-  email = data.get('email')
+def set_password_request():
+  try:
+    data = request.get_json()
+    email = data.get('email')
 
-  if not validate_email(email):
-    return jsonify({'message': 'Invalid email format'}), 400
- 
-  user = User.query.filter_by(email = email).first()
-  if user:
-    send_reset_email(user)
+    if not validate_email(email):
+      return jsonify({'message': 'Invalid email format'}), 400
+  
+    user = User.query.filter_by(email = email).first()
+    if user:
+      send_reset_email(user)
 
-  return jsonify({'message': 'If this account exist, you will recieve an email with isntruction'}),200
+    return jsonify({'message': 'If this account exist, you will recieve an email with isntruction'}),200
+  
+  except Exception as e:
+    return jsonify({'message': f'An unexpected error occurred while reset password request.{e}'}), 500
 
 
 
 @bp.route("/reset_password/<token>", methods=['GET','POST'])
 def reset_password(token):
-   user= User.verify_token(token)
-   if not user:
-      flash('The token is invalid or expired', 'warning')
-   
-   form = ResetPasswordForm()
-   if form.validate_on_submit():
-      hashed_password = generate_password_hash(form.password.data)
-      user.password = hashed_password
-      db.session.commit()
-      flash(message="your Password has been updated successfully",category="success")
+  try:
+    user= User.verify_token(token)
+    if not user:
+        flash('The token is invalid or expired', 'warning')
+    
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        hashed_password = generate_password_hash(form.password.data)
+        user.password = hashed_password
+        db.session.commit()
+        flash(message="your Password has been updated successfully",category="success")
 
-   return render_template('reset_password.html', title='Reset Password', form = form)
+    return render_template('reset_password.html', title='Reset Password', form = form)
+  
+  except Exception as e:
+    return jsonify({'message': f'An unexpected error occurred while reset password tokens.{e}'}), 500
 
 
     
