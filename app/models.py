@@ -1,7 +1,8 @@
+from itsdangerous import Serializer
 from app import db, login_manager
 from datetime import datetime
 from flask_login import UserMixin
-
+from flask import current_app
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -16,7 +17,7 @@ class User(db.Model, UserMixin):
   password = db.Column(db.String(120), nullable=False)
   phone = db.Column(db.String(20), nullable=True)
   is_verified = db.Column(db.Boolean, nullable=False, default=False)
-  is_admin = db.Column(db.Boolean, nullable=False, default= True)
+  is_admin = db.Column(db.Boolean, nullable=False, default= False)
   insurance_num = db.Column(db.String(20), nullable=True) 
 
   #medical info
@@ -37,6 +38,20 @@ class User(db.Model, UserMixin):
 
   def __repr__(self):
      return f'User({self.id}, {self.fullname})'
+  
+
+  def get_reset_token(self):
+    s = Serializer(current_app.config['SECRET_KEY'], salt='pw-reset')
+    return s.dumps({'user_id': self.id})
+
+  @staticmethod
+  def verify_reset_token(token, age=3600):
+    s = Serializer(current_app.config['SECRET_KEY'], salt='pw-reset')
+    try:
+      user_id = s.loads(token, max_age=age)['user_id']
+    except:
+      return None
+    return User.query.get(user_id)
   
 
   def to_dict(self):

@@ -1,8 +1,10 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, flash, jsonify, render_template, request
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import db
+from app.forms.forms import ResetPasswordForm
 from app.models import User
+from app.utils import send_reset_email
 from app.validators import validate_email, validate_fullname, validate_password
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -101,6 +103,40 @@ def logout():
                        
   except Exception as e:
     return jsonify({'message': 'An unexpected error occurred while logout the account'}), 500
+  
+
+
+
+@bp.route("/reset_password_request", methods=['POST'])
+def reset_request():
+  data = request.get_json()
+  email = data.get('email')
+
+  if not validate_email(email):
+    return jsonify({'message': 'Invalid email format'}), 400
+ 
+  user = User.query.filter_by(email = email).first()
+  if user:
+    send_reset_email(user)
+
+  return jsonify({'message': 'If this account exist, you will recieve an email with isntruction'}),200
+
+
+
+@bp.route("/reset_password/<token>", methods=['GET','POST'])
+def reset_password(token):
+   user= User.verify_token(token)
+   if not user:
+      flash('The token is invalid or expired', 'warning')
+   
+   form = ResetPasswordForm()
+   if form.validate_on_submit():
+      hashed_password = generate_password_hash(form.password.data)
+      user.password = hashed_password
+      db.session.commit()
+      flash(message="your Password has been updated successfully",category="success")
+
+   return render_template('reset_password.html', title='Reset Password', form = form)
 
 
     

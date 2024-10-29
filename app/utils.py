@@ -1,9 +1,10 @@
 from functools import wraps
-from flask import jsonify
+from flask import jsonify, url_for
 import datetime
 from flask_login import current_user, login_required
 import os
-from app import db
+from flask_mail import Message
+from app import db, mail
 from app.models import Notification
 current_year = datetime.datetime.now().year
 import google.generativeai as genai
@@ -101,12 +102,24 @@ def get_prompt_result(prompt):
   return response.text
 
 
-
 def trigger_notification(user_id, content):
   notification = Notification(user_id= user_id, content= content)
   db.session.add(notification)
   db.session.commit()
   
+
+
+def send_reset_email(user):    
+  token= user.get_reset_token()
+  msg=Message('Password reset request', sender= os.environ.get('EMAIL_USER'),
+               recipients= [user.email],
+               body=f''' To reset your password, visit the following link:
+               {url_for('auth.reset_password', token=token, _external=True)}  
+                if you did not make this request, please ignore this email'''
+              )
+  mail.send(msg)
+
+
     
  
         
