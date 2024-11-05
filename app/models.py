@@ -3,6 +3,7 @@ from app import db, login_manager
 from datetime import datetime
 from flask_login import UserMixin
 from flask import current_app
+from sqlalchemy.ext.hybrid import hybrid_property
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -103,11 +104,13 @@ class Test(db.Model):
   postparation = db.Column(db.Text, nullable= True)
   duration = db.Column(db.Integer, nullable= False, default = 10) #in minutes
 
-  appointments = db.relationship('Appointment', backref ='test', lazy = True)
-  measures = db.relationship('Measure', backref ='test', lazy = True)
+  appointments = db.relationship('Appointment', backref ='test', lazy = True, cascade="all, delete-orphan")
+  
+  measures = db.relationship('Measure', back_populates='test', lazy=True, cascade="all, delete-orphan")
+
  
   def __repr__(self):
-    return f'Test({self.id}, {self.name})'
+    return f'{self.name}'
   
   def to_dict(self):
     return {"name": self.name,
@@ -124,9 +127,13 @@ class Test(db.Model):
 class Measure(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
-  name = db.Column(db.Text, nullable=False)  
+  name = db.Column(db.Text, nullable=False) 
+  test = db.relationship('Test', back_populates='measures', lazy=True)
 
-  results = db.relationship('ResultField', backref= 'measure', lazy= True)
+  results = db.relationship('ResultField', backref= 'measure', lazy= True, cascade="all, delete-orphan")
+
+  def __repr__(self):
+     return f'{self.name}'
 
 
 

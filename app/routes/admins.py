@@ -6,9 +6,13 @@ from flask import Blueprint, flash, get_flashed_messages, redirect, render_templ
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.forms.forms import LoginForm, NewUserForm
+from app.forms.forms import LoginForm, NewMeasureForm, NewUserForm, UpdateMeasureForm
 from app.models import QA, Appointment, Lab, Measure, Notification, Support, Test, User
 from flask_admin.menu import MenuLink
+from flask_admin.form import SecureForm
+from flask_admin.contrib.sqla.filters import BaseSQLAFilter
+from sqlalchemy.orm import joinedload
+from flask_admin import Admin, expose
 
 bp = Blueprint('admins', __name__)
 
@@ -103,6 +107,34 @@ class UserAdmin(MyModelView):
     return True
 
 
+############################## Measure ################################
+
+
+class MeasureAdmin(ModelView):
+    # Specify the columns to display
+    column_list = ['test.name', 'name']
+    column_labels = {"test.name": "Test Name", "name": "Measure Name"}
+    form_excluded_columns = ['results']
+
+    # Set columns for searching
+    column_searchable_list = ['name','test.name']
+    page_size = 20
+
+    def create_form(self, obj=None): 
+      return NewMeasureForm() 
+
+    def update_form(self, obj=None):
+      form = super(MeasureAdmin, self).update_form(obj)  
+      form.name.render_kw = {'readonly': True}
+      return form
+
+    def scaffold_form(self):
+      form_class = super(MeasureAdmin, self).scaffold_form()  
+      del form_class.test
+      return form_class
+
+
+   
 
 
 
@@ -114,7 +146,7 @@ class UserAdmin(MyModelView):
 admin.add_view(UserAdmin(User, db.session))
 admin.add_view(MyModelView(Lab, db.session))
 admin.add_view(MyModelView(Test, db.session))
-admin.add_view(MyModelView(Measure, db.session))
+admin.add_view(MeasureAdmin(Measure, db.session))
 admin.add_view(MyModelView(Appointment, db.session))
 admin.add_view(MyModelView(Notification, db.session))
 admin.add_view(MyModelView(Support, db.session))

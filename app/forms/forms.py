@@ -2,11 +2,12 @@ from flask_wtf import FlaskForm
 from wtforms import BooleanField, IntegerField, SelectField, StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired,Email,NumberRange
 from wtforms.validators import Regexp, EqualTo, ValidationError, Length
+from wtforms_sqlalchemy.fields import QuerySelectField
+from app.models import Measure, Test, User
 
-from app.models import User
 
-
-
+def choice_query_test():
+  return Test.query 
 
 
 
@@ -24,6 +25,8 @@ class LoginForm(FlaskForm):
   password=PasswordField("Password", validators=[DataRequired()])
   submit=SubmitField("Login")
 
+
+######################### Admin dashboard forms  #################################
 
 
 class NewUserForm(FlaskForm):
@@ -66,4 +69,17 @@ class NewUserForm(FlaskForm):
     user=User.query.filter_by(email= email.data).first()
     if user:
       raise ValidationError("Email is already exist")
+    
+class NewMeasureForm(FlaskForm):
+  name = StringField("Name", validators=[DataRequired(), Length(min=4)])
+  test = QuerySelectField("Test name", query_factory= choice_query_test, get_label="name")
+ 
+  def validate_name(self, name):
+    measure = Measure.query.filter_by(name= name.data).first()
+    if measure:
+      raise ValidationError("Measure is already exist")
+
+
+class UpdateMeasureForm:
+  name = StringField("Name", validators=[DataRequired(), Length(min= 4)])
 
