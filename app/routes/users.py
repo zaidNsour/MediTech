@@ -23,10 +23,13 @@ def info():
 @bp.route('/all_info', methods=['GET'])
 @login_required
 def all_info():
-  user = User.query.filter_by(id= current_user.id).first()
-  if user:
-    return jsonify(user.to_dict()), 200 
-
+  try:
+    user = User.query.filter_by(id= current_user.id).first()
+    if user:
+      return jsonify(user.to_dict()), 200 
+  
+  except Exception as e:
+    return jsonify({'message': 'An error occurred while fetch the user info'}), 500
 
 @bp.route("/update_profile_info", methods=["PUT"])
 @login_required

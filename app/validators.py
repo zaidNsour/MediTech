@@ -24,7 +24,7 @@ def validate_password(value):
     return True, ""
 
 def validate_phone(phone):
-  return len(phone) >= 8
+    return 8 <= len(phone) <= 15
 
 def validate_height(height):
     return height > 0 and height < 600
@@ -51,7 +51,7 @@ def validate_date(date):
   return True
 
 def validate_insurance_num(insurance_num):
-  return len(insurance_num) >= 6
+   return 8 <= len(insurance_num) <= 15
 
 
 def validate_measures_value(measure_id, value):
