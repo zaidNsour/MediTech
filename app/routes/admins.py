@@ -4,15 +4,10 @@ from wtforms import PasswordField
 from app import admin, db
 from flask import Blueprint, flash, get_flashed_messages, redirect, render_template, url_for
 from flask_login import current_user, login_user, logout_user
-from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.forms.forms import LoginForm, NewMeasureForm, NewUserForm, UpdateMeasureForm
-from app.models import QA, Appointment, Lab, Measure, Notification, Support, Test, User
+from app.forms.forms import LoginForm, NewAppointmentForm, NewMeasureForm, NewUserForm, UpdateAppointmentForm
+from app.models import QA, Appointment, Lab, Measure,Support, Test, User
 from flask_admin.menu import MenuLink
-from flask_admin.form import SecureForm
-from flask_admin.contrib.sqla.filters import BaseSQLAFilter
-from sqlalchemy.orm import joinedload
-from flask_admin import Admin, expose
 
 bp = Blueprint('admins', __name__)
 
@@ -64,10 +59,10 @@ admin.add_link(MenuLink(name='Logout', category='', url="/logout"))
 
 ############################## User ################################
 class UserAdmin(MyModelView):
-  column_list = ['fullname','email','phone','insurance_num', 'gender', 'birth_year','height',
+  column_list = ['id','fullname','email','phone','insurance_num', 'gender', 'birth_year','height',
                   'weight','smoke', 'num_of_pregnancies', 'is_pregnant', 'exng', 'heart_disease',
                   'is_verified','is_admin']
-  column_searchable_list = ['fullname', 'email']
+  column_searchable_list = ['id','fullname', 'email']
   form_excluded_columns = ['password']
   page_size = 15
   form_extra_fields = { 'password2': PasswordField('Password'),}
@@ -108,8 +103,6 @@ class UserAdmin(MyModelView):
 
 
 ############################## Measure ################################
-
-
 class MeasureAdmin(ModelView):
     # Specify the columns to display
     column_list = ['test.name', 'name']
@@ -133,11 +126,31 @@ class MeasureAdmin(ModelView):
       del form_class.test
       return form_class
 
+############################## Appointment #################################   
+class AppointmentAdmin(ModelView):
+  column_list = [ 'lab.name','test.name','user.fullname','date','state',
+                  'is_done', 'doctor_notes', 'creation_date']
+  column_searchable_list = ['lab.name','test.name', 'user.fullname']
+  column_labels = {"lab.name": "Lab", "test.name": "Test", "user.fullname":"Fullname", "is_done":"Done"}
+  form_excluded_columns = ['results', 'creation_date', 'user']
 
-   
+  def create_form(self, obj=None): 
+      return NewAppointmentForm() 
+  
+  def edit_form(self, obj=None):
+      return UpdateAppointmentForm(obj=obj)
 
-
-
+'''
+  def on_model_change(self, form, model, is_created):
+    pass
+'''
+############################## Support #################################   
+class SupportAdmin(MyModelView):
+  column_list=  ['user_id', 'title', 'description']
+  column_searchable_list = ['title']
+  can_create = False  
+  can_edit = False    
+  page_size = 20
 
 
 
@@ -147,7 +160,6 @@ admin.add_view(UserAdmin(User, db.session))
 admin.add_view(MyModelView(Lab, db.session))
 admin.add_view(MyModelView(Test, db.session))
 admin.add_view(MeasureAdmin(Measure, db.session))
-admin.add_view(MyModelView(Appointment, db.session))
-admin.add_view(MyModelView(Notification, db.session))
-admin.add_view(MyModelView(Support, db.session))
+admin.add_view(AppointmentAdmin(Appointment, db.session))
+admin.add_view(SupportAdmin(Support, db.session))
 admin.add_view(MyModelView(QA, db.session))

@@ -1,13 +1,20 @@
+from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, IntegerField, SelectField, StringField, PasswordField, SubmitField
+from wtforms import BooleanField, DateField, DateTimeField, DateTimeLocalField, IntegerField, SelectField, StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired,Email,NumberRange
 from wtforms.validators import Regexp, EqualTo, ValidationError, Length
 from wtforms_sqlalchemy.fields import QuerySelectField
-from app.models import Measure, Test, User
+from app.models import Lab, Measure, Test, User
 
 
 def choice_query_test():
   return Test.query 
+
+def choice_query_lab():
+  return Lab.query 
+
+def choice_query_user():
+  return User.query 
 
 
 
@@ -82,4 +89,37 @@ class NewMeasureForm(FlaskForm):
 
 class UpdateMeasureForm:
   name = StringField("Name", validators=[DataRequired(), Length(min= 4)])
+
+
+
+class NewAppointmentForm(FlaskForm):
+  lab = QuerySelectField("Lab Name", query_factory= choice_query_lab, get_label="name")
+  test = QuerySelectField("Test Name", query_factory= choice_query_test, get_label="name")
+  user = QuerySelectField("User ID", query_factory= choice_query_user, get_label="id")
+  date = DateTimeLocalField(
+        'Date',
+        format='%Y-%m-%dT%H:%M',
+        validators=[DataRequired()]
+    )
+  doctor_notes = StringField("Doctor notes", validators=[DataRequired(), Length(min= 6)])
+ 
+ 
+class UpdateAppointmentForm(FlaskForm):
+  lab = QuerySelectField("Lab Name", query_factory= choice_query_lab, get_label="name")
+  test = QuerySelectField("Test Name", query_factory= choice_query_test, get_label="name")
+  date = DateTimeLocalField(
+        'Date',
+        format='%Y-%m-%dT%H:%M',
+        validators=[DataRequired()]
+    )
+  is_done= BooleanField("Is Done")
+
+  state = SelectField( 
+    "State",
+    choices=[('Scheduled','Scheduled'),('Confirmed','Confirmed'),
+             ('Canceled','Canceled'),('Cancellation Requested','Cancellation Requested')],
+    validators=[DataRequired()]
+  ) 
+  
+  doctor_notes = StringField("Doctor notes", validators=[DataRequired(), Length(min= 6)])
 

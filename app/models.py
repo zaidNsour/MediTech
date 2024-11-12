@@ -39,7 +39,7 @@ class User(db.Model, UserMixin):
   notifications = db.relationship('Notification', backref ='user', lazy=True)
 
   def __repr__(self):
-     return f'User({self.id}, {self.fullname})'
+     return f'{self.fullname}'
   
 
   def get_reset_token(self):
@@ -86,7 +86,7 @@ class Lab(db.Model):
   appointments = db.relationship('Appointment', backref ='lab', lazy=True)
 
   def __repr__(self):
-     return f'Location({self.id}, {self.name})'
+     return f'{self.name}'
   
   def to_dict(self):
     return {"id": self.id,
@@ -144,14 +144,15 @@ class Appointment(db.Model):
   test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable= False)
   doctor_notes = db.Column(db.String(200), nullable=False, default = "None")
   is_done = db.Column(db.Boolean, nullable= False, default= False)
-  # Scheduled, Confirmed, Rescheduled, Canceled, Cancellation Requested 
+  # Scheduled, Confirmed, Rescheduled, Canceled, Cancellation Requested, Done 
   state = db.Column(db.String(60), nullable= False, default = "Scheduled") 
  # if server clock different than local clock correct this by add or substract  
  # timedelta(hours = x)
   date = db.Column(db.DateTime, nullable= False)               
   creation_date= db.Column(db.DateTime, nullable= False, default= lambda: datetime.now())
 
-  results = db.relationship('ResultField', backref= 'appointment', lazy= True)
+  results = db.relationship('ResultField', backref= 'appointment',
+                             cascade='all, delete-orphan' )
 
   def to_dict(self):
     return {"id": self.id,
