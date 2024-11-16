@@ -2,10 +2,11 @@ from flask import Blueprint, jsonify, request
 from app import db
 from app.models import Appointment, Lab, Test, User
 from app.utils import admin_required
-from app.validators import validate_date
+from app.validators import validate_date, validate_day
 from flask_login import current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+from datetime import datetime, timedelta
+from config import OPENING_TIME, CLOSING_TIME
 
 bp = Blueprint('appointments', __name__, url_prefix='/appointments')
 
@@ -13,7 +14,6 @@ bp = Blueprint('appointments', __name__, url_prefix='/appointments')
 @bp.route("/appointments", methods=["GET"])
 @login_required
 def appointments():
-   
   appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
   appointments_list = [appointment.to_dict() for appointment in appointments]
   return jsonify({"appointments": appointments_list}), 200
@@ -25,7 +25,6 @@ def appointments():
   "location": 2,
   "date": "2024-10-18T15:30:00"
 }
-
 '''
 
 @bp.route("/schedule", methods=[ "POST"])
@@ -54,78 +53,83 @@ def schedule():
     if not lab:
       return jsonify({'message': 'Lab not found.'}), 400
     
-    if not validate_date(date):
-      return jsonify({'message': 'Invalid date.'}), 400
+    is_valid_date, date_message = validate_date(date)
+    if not is_valid_date:
+      return jsonify({'message': date_message}), 400
     
     date_object = datetime.fromisoformat(date)
-      
+
+  
     ex_appointment = Appointment.query.filter_by(date= date_object, lab_id= lab_id).first()
       
     if ex_appointment: 
       return jsonify({'message': 'Appointments already exist in this time.'}), 400
 
     appointment = Appointment(user_id= user_id, test_id= test_id, lab_id= lab_id, date= date_object)    
-          
     db.session.add(appointment)
     db.session.commit()
     return jsonify({'message': 'Appointment scheduled successfully!'}), 200
   
   except SQLAlchemyError as e:
     db.session.rollback()
-    return jsonify({'message': f'Database error occurred while schedule Appointment.{e}'}), 500
+    return jsonify({'message': f'Database error occurred while schedule Appointment.'}), 500
     
   except Exception as e:
     return jsonify({'message': 'An unexpected error occurred while schedule Appointment.'}), 500
 
    
 
-'''
+
 @bp.route("/available_periods", methods=["GET"])
-@login_required
+#@login_required
 def periods():
     try:
         data = request.get_json()
         day = data.get("day") 
-        lab_id = request.args.get("location")
-        test_id = request.args.get("test") 
+        lab_id = data.get("lab_id")
+        test_id = data.get("test_id") 
 
-        if not day:
-          return jsonify({'message': 'Day not found.'}), 400
+        if not all( [test_id, lab_id, day] ):
+          return jsonify({'message': 'Missing day, lab id, or test id.'}), 400
         
-      
-
-        if not all([test_id, lab_id]):
-            return render_template("error.jinja", message="All fields are required", code=400)
-
         test = Test.query.get(test_id)
+        lab = Lab.query.get( lab_id )
 
-        # Convert opening and closing times to datetime objects
-        opening_time = datetime.strptime(f"{date} {OPENING_TIME}", "%Y-%m-%d %H:%M")
-        closing_time = datetime.strptime(f"{date} {CLOSING_TIME}", "%Y-%m-%d %H:%M")
+        if not test:
+          return jsonify({'message': 'Test not found.'}), 400
+    
+        if not lab:
+          return jsonify({'message': 'Lab not found.'}), 400
+        
+        try:
+            date_object = datetime.fromisoformat(day)
+        except ValueError:
+            return jsonify({'message': 'Invalid day format.'}), 400
+
 
         # Get existing appointments for the day
-        existing_appointments = (
-        db.session.query(Appointment)
-        .filter_by(test_id= test_id, lab_id= lab_id, is_done= 0)
-        .filter(func.date(Appointment.time) == date)
-        .all()
-    )
+        existing_appointments = Appointment.get_appointments_for_day(date_object)
+        booked_periods = set(appointment.date.time() for appointment in existing_appointments)
 
-        booked_periods = set(appointment.time for appointment in existing_appointments)
-        available_periods = []
-        current_time = opening_time
+       
+        opening_time = datetime.strptime(OPENING_TIME,"%H:%M").time()
+        closing_time = datetime.strptime(CLOSING_TIME,"%H:%M").time()
+        
+        current_time = datetime.combine(date_object, opening_time)
+        end_time = datetime.combine(date_object, closing_time)
         time_slot = timedelta(minutes= test.duration)
 
-        while current_time + time_slot <= closing_time:
-            if current_time.strftime("%Y-%m-%d %H:%M") not in booked_periods:
+        available_periods = []
+        while current_time + time_slot <= end_time:
+            if current_time.time() not in booked_periods:
                 available_periods.append(current_time.strftime("%H:%M"))
             current_time += time_slot
 
-        return render_template("appointments/periods.jinja", periods= available_periods)
+        return jsonify({'available_periods': available_periods}), 200
     
     except Exception as e:
-        return render_template("error.jinja",message=f"An unexpected error occurred.", code=500), 500
-'''
+        return jsonify({'An unexpected error occurred while fetching the available periods.'}), 500
+        
 
 
 @bp.route("/cancel_request", methods=["POST"])
@@ -151,7 +155,6 @@ def cancel_request():
       return jsonify({'message': 'An unexpected error occurred while Cancellation Requested.'}), 500
     
 
- 
 
 @bp.route("/labs")
 @login_required

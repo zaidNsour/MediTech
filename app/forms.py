@@ -1,11 +1,10 @@
-from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, DateField, DateTimeField, DateTimeLocalField, IntegerField, SelectField, StringField, PasswordField, SubmitField
+from wtforms import BooleanField, DateTimeLocalField, IntegerField, SelectField
+from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired,Email,NumberRange
 from wtforms.validators import Regexp, EqualTo, ValidationError, Length
 from wtforms_sqlalchemy.fields import QuerySelectField
 from app.models import Lab, Measure, Test, User
-
 
 def choice_query_test():
   return Test.query 
@@ -15,7 +14,6 @@ def choice_query_lab():
 
 def choice_query_user():
   return User.query 
-
 
 
 class ResetPasswordForm(FlaskForm):
@@ -77,6 +75,8 @@ class NewUserForm(FlaskForm):
     if user:
       raise ValidationError("Email is already exist")
     
+
+    
 class NewMeasureForm(FlaskForm):
   name = StringField("Name", validators=[DataRequired(), Length(min=4)])
   test = QuerySelectField("Test name", query_factory= choice_query_test, get_label="name")
@@ -85,6 +85,7 @@ class NewMeasureForm(FlaskForm):
     measure = Measure.query.filter_by(name= name.data).first()
     if measure:
       raise ValidationError("Measure is already exist")
+
 
 
 class UpdateMeasureForm:
@@ -101,7 +102,8 @@ class NewAppointmentForm(FlaskForm):
         format='%Y-%m-%dT%H:%M',
         validators=[DataRequired()]
     )
-  doctor_notes = StringField("Doctor notes", validators=[DataRequired(), Length(min= 6)])
+  doctor_notes = StringField("Doctor notes")
+ 
  
  
 class UpdateAppointmentForm(FlaskForm):
@@ -121,5 +123,5 @@ class UpdateAppointmentForm(FlaskForm):
     validators=[DataRequired()]
   ) 
   
-  doctor_notes = StringField("Doctor notes", validators=[DataRequired(), Length(min= 6)])
+  doctor_notes = StringField("Doctor notes")
 

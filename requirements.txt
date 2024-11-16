@@ -15,6 +15,8 @@ contourpy==1.2.0
 cycler==0.12.1
 debugpy==1.8.5
 decorator==5.1.1
+dnspython==2.7.0
+email_validator==2.2.0
 executing==2.0.1
 Flask==3.0.2
 Flask-Admin==1.6.1
@@ -72,7 +74,7 @@ Pygments==2.18.0
 pyparsing==3.1.2
 python-dateutil==2.9.0.post0
 pytz==2024.1
-#pywin32==308
+pywin32==308
 pyzmq==26.2.0
 requests==2.32.3
 rsa==4.9
@@ -93,3 +95,4 @@ wcwidth==0.2.13
 Werkzeug==3.0.1
 wheel==0.44.0
 WTForms==3.1.2
+WTForms-SQLAlchemy==0.4.2

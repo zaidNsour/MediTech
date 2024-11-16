@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 
 def is_boolean(num):
@@ -48,7 +49,21 @@ def validate_heart_disease(heart_disease):
     return is_boolean(heart_disease)
 
 def validate_date(date):
-  return True
+  min = date.split("T")[1].split(":")[1]
+  hour = date.split("T")[1].split(":")[0]
+  date_object = datetime.fromisoformat(date)
+
+  if not int(min) in range(0,60,5):
+    return False, 'Invalid minutes value'
+  if not int(hour) in range(7,22,1):    
+    return False, 'Invalid hours value'
+  if datetime.now() > date_object:
+    return False, 'Invalid date'  
+  return True, ""
+
+def validate_day(day):
+   return True
+  
 
 def validate_insurance_num(insurance_num):
    return 8 <= len(insurance_num) <= 15

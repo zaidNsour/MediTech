@@ -5,7 +5,7 @@ from app import admin, db
 from flask import Blueprint, flash, get_flashed_messages, redirect, render_template, url_for
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.forms.forms import LoginForm, NewAppointmentForm, NewMeasureForm, NewUserForm, UpdateAppointmentForm
+from app.forms import LoginForm, NewAppointmentForm, NewMeasureForm, NewUserForm, UpdateAppointmentForm
 from app.models import QA, Appointment, Lab, Measure,Support, Test, User
 from flask_admin.menu import MenuLink
 
@@ -75,7 +75,6 @@ class UserAdmin(MyModelView):
 
       if form.password2.data != '':
         model.password = generate_password_hash(form.password2.data)
-      
       
       if form.email.data != model.email:  # Email changed
        if self.model_class.query.filter_by(email = form.email.data).first():
@@ -151,9 +150,6 @@ class SupportAdmin(MyModelView):
   can_create = False  
   can_edit = False    
   page_size = 20
-
-
-
 
 
 admin.add_view(UserAdmin(User, db.session))

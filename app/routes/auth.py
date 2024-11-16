@@ -2,7 +2,7 @@ from flask import Blueprint, flash, jsonify, render_template, request
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import db
-from app.forms.forms import ResetPasswordForm
+from app.forms import ResetPasswordForm
 from app.models import User
 from app.utils import send_reset_email
 from app.validators import validate_email, validate_fullname, validate_password

@@ -3,7 +3,7 @@ from app import db, login_manager
 from datetime import datetime
 from flask_login import UserMixin
 from flask import current_app
-from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import extract
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -165,7 +165,15 @@ class Appointment(db.Model):
             "time": self.date,
             "creation_time": self.creation_date,
             }
+  
 
+  def get_appointments_for_day(target_date):
+    appointments = db.session.query(Appointment).filter(
+        extract('year', Appointment.date) == target_date.year,
+        extract('month', Appointment.date) == target_date.month,
+        extract('day', Appointment.date) == target_date.day
+    ).all()
+    return appointments
 
   
 class ResultField(db.Model):
