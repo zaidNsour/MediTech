@@ -1,10 +1,15 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, DateTimeLocalField, IntegerField, SelectField
+from wtforms import BooleanField, DateTimeLocalField, FloatField, IntegerField, SelectField
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired,Email,NumberRange
 from wtforms.validators import Regexp, EqualTo, ValidationError, Length
+from wtforms.validators import InputRequired
 from wtforms_sqlalchemy.fields import QuerySelectField
 from app.models import Lab, Measure, Test, User
+
+def choice_query_measure():
+  return Measure.query 
+
 
 def choice_query_test():
   return Test.query 
@@ -92,6 +97,17 @@ class UpdateMeasureForm:
   name = StringField("Name", validators=[DataRequired(), Length(min= 4)])
 
 
+class NewMeasureRangeForm(FlaskForm):
+  measure = QuerySelectField("Measure name", query_factory= choice_query_measure, get_label="name")
+  gender = SelectField(
+    "Gender",
+    choices=[('Male','male'),('Female','female')],
+    validators=[DataRequired()]
+  ) 
+  lower = FloatField("Lower",validators=[InputRequired()])
+  upper = FloatField("Upper",validators=[DataRequired()])
+
+  
 
 class NewAppointmentForm(FlaskForm):
   lab = QuerySelectField("Lab Name", query_factory= choice_query_lab, get_label="name")

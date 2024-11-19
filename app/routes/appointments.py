@@ -14,7 +14,10 @@ bp = Blueprint('appointments', __name__, url_prefix='/appointments')
 @bp.route("/appointments", methods=["GET"])
 @login_required
 def appointments():
-  appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
+  if current_user.is_admin:
+    appointments = Appointment.query.filter_by(is_done = False) 
+  else:
+    appointments = Appointment.query.filter_by(is_done = False, user_id = current_user.id)   
   appointments_list = [appointment.to_dict() for appointment in appointments]
   return jsonify({"appointments": appointments_list}), 200
   
@@ -81,7 +84,7 @@ def schedule():
 
 
 @bp.route("/available_periods", methods=["GET"])
-#@login_required
+@admin_required
 def periods():
     try:
         data = request.get_json()

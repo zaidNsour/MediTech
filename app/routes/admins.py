@@ -5,8 +5,8 @@ from app import admin, db
 from flask import Blueprint, flash, get_flashed_messages, redirect, render_template, url_for
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.forms import LoginForm, NewAppointmentForm, NewMeasureForm, NewUserForm, UpdateAppointmentForm
-from app.models import QA, Appointment, Lab, Measure,Support, Test, User
+from app.forms import LoginForm, NewAppointmentForm, NewMeasureForm, NewMeasureRangeForm, NewUserForm, UpdateAppointmentForm
+from app.models import QA, Appointment, Lab, Measure, MeasureRange,Support, Test, User
 from flask_admin.menu import MenuLink
 
 bp = Blueprint('admins', __name__)
@@ -125,13 +125,28 @@ class MeasureAdmin(ModelView):
       del form_class.test
       return form_class
 
+############################## Measure Range ################################
+class MeasureRangeAdmin(ModelView):
+  # Specify the columns to display
+  column_list = ['measure.name', 'gender', 'lower', 'upper']
+  column_labels = {"measure.name": "Measure Name"}
+
+  # Set columns for searching
+  column_searchable_list = ['measure.name',]
+  page_size = 20
+
+  def create_form(self, obj=None): 
+    return NewMeasureRangeForm() 
+
+
 ############################## Appointment #################################   
 class AppointmentAdmin(ModelView):
-  column_list = [ 'lab.name','test.name','user.fullname','date','state',
+  column_list = [ 'lab.name','test.name','user.id','date','state',
                   'is_done', 'doctor_notes', 'creation_date']
-  column_searchable_list = ['lab.name','test.name', 'user.fullname']
-  column_labels = {"lab.name": "Lab", "test.name": "Test", "user.fullname":"Fullname", "is_done":"Done"}
+  column_searchable_list = ['lab.name','test.name', 'user.id']
+  column_labels = {"lab.name": "Lab", "test.name": "Test", "user.id":"User ID", "is_done":"Done"}
   form_excluded_columns = ['results', 'creation_date', 'user']
+  column_filters = ('date',)
 
   def create_form(self, obj=None): 
       return NewAppointmentForm() 
@@ -156,6 +171,7 @@ admin.add_view(UserAdmin(User, db.session))
 admin.add_view(MyModelView(Lab, db.session))
 admin.add_view(MyModelView(Test, db.session))
 admin.add_view(MeasureAdmin(Measure, db.session))
+admin.add_view(MeasureRangeAdmin(MeasureRange, db.session))
 admin.add_view(AppointmentAdmin(Appointment, db.session))
 admin.add_view(SupportAdmin(Support, db.session))
 admin.add_view(MyModelView(QA, db.session))

@@ -82,7 +82,7 @@ def fill():
       if not validate_measures_value(measure.id, value):
         return jsonify({"message": f"Invalid values for the given measure: {measure_name}"}), 400
       
-      classification= classify_result_value(test.name, measure_name,user.gender, value)  
+      classification= classify_result_value(measure_name,user.gender,value)  
 
       result = ResultField(appointment_id= appointment_id,
                           measure_id= measure.id,
@@ -167,24 +167,32 @@ def interpret():
     if current_user.is_admin:
       appointment = Appointment.query.filter_by(id= appointment_id, is_done= True).first()     
     else:
-      appointment = Appointment.query.filter_by(id= appointment_id, user_id= current_user.id, is_done= True).first()    
+      appointment = Appointment.query.filter_by(id= appointment_id, user_id= current_user.id, is_done= True).first() 
+   
 
     if not appointment:
       return jsonify({"message": "Invalid appointment ID."}), 400 
-
-    test_name = appointment.test.name
-    user_info= parse_user_info(appointment.user)
-    results = [f"name:{result.measure.name}, value:{result.value}," for result in appointment.results]
-    doctor_notes = appointment.doctor_notes
-
-    prompt = generate_prompt(test_name, user_info, results, doctor_notes)
-    interpretation = get_prompt_result(prompt)
-
     
+    if not appointment.interpretation:
+      test_name = appointment.test.name
+      user_info= parse_user_info(appointment.user)
+      results = [f"name:{result.measure.name}, value:{result.value}," for result in appointment.results]
+      doctor_notes = appointment.doctor_notes
+
+      prompt = generate_prompt(test_name, user_info, results, doctor_notes)
+      interpretation = get_prompt_result(prompt)
+      appointment.interpretation = interpretation
+      db.session.commit()
+    else:
+      interpretation = appointment.interpretation
+
     return jsonify({"result interpretation": interpretation}), 200
   
+  except SQLAlchemyError as e:
+    db.session.rollback()
+    return jsonify({'message': 'Database error occurred while while interpret the result.'}), 500
   except Exception as e:
-    return jsonify({'message': f'An unexpected error occurred while fetch the result. {e}'}), 500
+    return jsonify({'message': f'An unexpected error occurred while interpret the result.'}), 500
 
 
 

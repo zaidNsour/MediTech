@@ -131,9 +131,24 @@ class Measure(db.Model):
   test = db.relationship('Test', back_populates='measures', lazy=True)
 
   results = db.relationship('ResultField', backref= 'measure', lazy= True, cascade="all, delete-orphan")
+  measures = db.relationship('MeasureRange', backref= 'measure', lazy= True, cascade="all, delete-orphan")
 
   def __repr__(self):
      return f'{self.name}'
+  
+
+class MeasureRange(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  measure_id = db.Column(db.Integer, db.ForeignKey('measure.id'), nullable= False)
+  gender = db.Column(db.String(10), nullable= False)
+  upper = db.Column(db.Float, nullable= False)
+  lower = db.Column(db.Float, nullable= False)
+  def __repr__(self):
+     return f'{self.name}'
+  
+  __table_args__ = (
+        db.UniqueConstraint('gender', 'measure_id', name='unique_gender_per_measure_id'),
+    )
 
 
 
@@ -148,7 +163,8 @@ class Appointment(db.Model):
   state = db.Column(db.String(60), nullable= False, default = "Scheduled") 
  # if server clock different than local clock correct this by add or substract  
  # timedelta(hours = x)
-  date = db.Column(db.DateTime, nullable= False)               
+  date = db.Column(db.DateTime, nullable= False)
+  interpretation = db.Column(db.Text, nullable= True)            
   creation_date= db.Column(db.DateTime, nullable= False, default= lambda: datetime.now())
 
   results = db.relationship('ResultField', backref= 'appointment',
@@ -187,6 +203,7 @@ class ResultField(db.Model):
         db.UniqueConstraint('appointment_id', 'measure_id', name='unique_appointment_per_measure'),
     )
   
+
  
 
 class Notification(db.Model):
