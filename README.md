@@ -1,6 +1,6 @@
 # MediTech
 
-The Medical Test Management System is a API designed to simplify medical test processes and enhance the patient experience. This system allows patients to view, manage, and interpret their medical test results, schedule appointments, and access critical healthcare-related information.
+The Medical Test Management System is an API designed to simplify medical test processes and enhance the patient experience. This system allows patients to view, manage, and interpret their medical test results, schedule appointments, and access critical healthcare-related information.
 
 
 ## Features
